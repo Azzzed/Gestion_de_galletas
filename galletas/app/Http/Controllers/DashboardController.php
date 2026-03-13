@@ -11,22 +11,26 @@ class DashboardController extends Controller
     {
         $date = $request->get('date', today()->toDateString());
 
-        // ── Ventas del día ──
         $sales = JsonStorage::getSalesByDate($date);
 
-        // ── Totales por método de pago ──
+        // Excluir pagos de deuda del conteo normal
+        $normalSales = $sales->filter(fn($s) => ($s->sale_type ?? '') !== 'debt_payment');
+
         $totalEfectivo  = $sales->where('payment_method', 'efectivo')->sum('total');
         $totalNequi     = $sales->where('payment_method', 'nequi')->sum('total');
         $totalDaviplata = $sales->where('payment_method', 'daviplata')->sum('total');
         $totalGeneral   = $totalEfectivo + $totalNequi + $totalDaviplata;
 
-        // ── Conteos ──
-        $totalVentas      = $sales->count();
-        $ventasIndividual = $sales->where('sale_type', 'individual')->count();
-        $ventasBowl       = $sales->where('sale_type', 'bowl')->count();
+        $totalVentas      = $normalSales->count();
+        $ventasIndividual = $normalSales->where('sale_type', 'individual')->count();
+        $ventasBowl       = $normalSales->where('sale_type', 'bowl')->count();
 
-        // ── Ranking de galletas más vendidas ──
-        $ranking = $sales
+        // Pagos de deudas del día
+        $debtPayments = JsonStorage::getDebtPaymentsByDate($date);
+        $totalDebtPayments = $debtPayments->sum('total');
+
+        // Ranking
+        $ranking = $normalSales
             ->flatMap(fn($s) => $s->items)
             ->groupBy('product_id')
             ->map(function ($items, $productId) {
@@ -39,11 +43,10 @@ class DashboardController extends Controller
             ->sortByDesc('total_vendidas')
             ->values();
 
-        // ── Últimas ventas ──
-        $latestSales = $sales
-            ->sortByDesc(fn($s) => $s->created_at)
-            ->take(20)
-            ->values();
+        $latestSales = $normalSales->sortByDesc(fn($s) => $s->created_at)->take(20)->values();
+
+        // Total deudas pendientes
+        $totalPendingDebts = JsonStorage::getTotalPendingDebts();
 
         return view('dashboard.index', compact(
             'date',
@@ -55,7 +58,9 @@ class DashboardController extends Controller
             'ventasIndividual',
             'ventasBowl',
             'ranking',
-            'latestSales'
+            'latestSales',
+            'totalPendingDebts',
+            'totalDebtPayments'
         ));
     }
 }

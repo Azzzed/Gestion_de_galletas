@@ -4,12 +4,8 @@
 @section('content')
 <div x-data="posSystem()" x-cloak class="flex flex-col lg:flex-row gap-6">
 
-    {{-- ════════════════════════════════════════════════ --}}
-    {{-- ══ COLUMNA IZQUIERDA — CATÁLOGO DE GALLETAS ══ --}}
-    {{-- ════════════════════════════════════════════════ --}}
+    {{-- COLUMNA IZQUIERDA — CATÁLOGO --}}
     <div class="flex-1">
-
-        {{-- Header con tipo de venta --}}
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <div>
                 <h2 class="text-2xl font-extrabold text-cookie-900">
@@ -28,7 +24,6 @@
                 </p>
             </div>
 
-            {{-- Toggle tipo de venta --}}
             <div class="flex bg-white rounded-xl p-1 shadow-sm border border-cookie-200">
                 <button @click="switchType('individual')"
                         :class="saleType === 'individual' ? 'bg-cookie-500 text-white shadow-md' : 'text-cookie-600 hover:bg-cookie-50'"
@@ -43,7 +38,7 @@
             </div>
         </div>
 
-        {{-- ══ GRID DE TARJETAS DE GALLETAS ══ --}}
+        {{-- GRID DE TARJETAS --}}
         <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-4">
             @foreach($products as $product)
                 <div @click="addToCart({
@@ -55,229 +50,212 @@
                         color: '{{ $product->color_hex }}'
                      })"
                      class="card-bounce cursor-pointer rounded-2xl overflow-hidden bg-white
-                            border-2 transition-all duration-200 select-none"
+                            border-2 transition-all duration-200 select-none group
+                            {{ $product->available_stock == 0 ? 'opacity-50 cursor-not-allowed' : '' }}"
                      :class="getCartQty({{ $product->id }}) > 0
-                             ? 'border-cookie-500 ring-2 ring-cookie-300'
-                             : 'border-transparent shadow-md hover:shadow-xl'"
-                >
+                             ? 'border-cookie-500 ring-2 ring-cookie-300 shadow-lg'
+                             : 'border-transparent shadow-md hover:shadow-xl'">
 
-                    {{-- ═══ CONTENEDOR DE IMAGEN ═══ --}}
-                    {{-- Aquí irá la foto real de tu galleta --}}
-                    <div class="relative aspect-square overflow-hidden bg-gray-100">
-
+                    <div class="relative aspect-square overflow-hidden bg-gray-50">
                         @if($product->image_url)
-                            {{-- ✅ IMAGEN REAL --}}
                             <img src="{{ $product->image_url }}"
                                  alt="Galleta {{ $product->name }}"
-                                 class="w-full h-full object-cover transition-transform duration-300
-                                        hover:scale-110"
-                                 loading="lazy" />
+                                 class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                                 loading="lazy" draggable="false" />
                         @else
-                            {{-- 🎨 PLACEHOLDER — Reemplaza con tu imagen --}}
-                            {{-- Coloca la imagen en: public/images/galletas/{{ $product->slug }}.jpg --}}
                             <div class="w-full h-full flex flex-col items-center justify-center"
                                  style="background: linear-gradient(135deg, {{ $product->color_hex }}22, {{ $product->color_hex }}44)">
                                 <span class="text-5xl mb-2">🍪</span>
-                                <span class="text-xs font-medium px-2 py-1 rounded-full bg-white/70 text-gray-600">
-                                    Agregar foto
-                                </span>
                             </div>
                         @endif
 
-                        {{-- Badge de stock --}}
-                        <div class="absolute top-2 right-2">
-                            <span class="text-xs font-bold px-2 py-1 rounded-full shadow-sm
-                                         {{ $product->available_stock > 5 ? 'bg-green-100 text-green-800' :
-                                            ($product->available_stock > 0 ? 'bg-amber-100 text-amber-800' :
-                                            'bg-red-100 text-red-800') }}">
-                                {{ $product->available_stock > 0 ? $product->available_stock . ' uds' : 'AGOTADA' }}
-                            </span>
+                        <div class="absolute top-2 right-2 z-10">
+                            @if($product->available_stock > 5)
+                                <span class="text-xs font-bold px-2 py-1 rounded-full shadow-sm bg-green-100/90 text-green-800">
+                                    {{ $product->available_stock }}
+                                </span>
+                            @elseif($product->available_stock > 0)
+                                <span class="text-xs font-bold px-2 py-1 rounded-full shadow-sm bg-amber-100/90 text-amber-800 animate-pulse">
+                                    ¡{{ $product->available_stock }}!
+                                </span>
+                            @else
+                                <span class="text-xs font-bold px-2 py-1 rounded-full shadow-sm bg-red-100/90 text-red-800">
+                                    AGOTADA
+                                </span>
+                            @endif
                         </div>
 
-                        {{-- Badge de cantidad en carrito --}}
                         <div x-show="getCartQty({{ $product->id }}) > 0"
-                             x-transition:enter="transition ease-out duration-200"
-                             x-transition:enter-start="scale-0"
-                             x-transition:enter-end="scale-100"
-                             class="absolute top-2 left-2">
-                            <span class="flex items-center justify-center w-8 h-8 rounded-full
-                                         bg-cookie-500 text-white text-sm font-extrabold shadow-lg">
+                             x-transition class="absolute top-2 left-2 z-10">
+                            <span class="flex items-center justify-center w-9 h-9 rounded-full
+                                         bg-cookie-500 text-white text-sm font-extrabold shadow-lg ring-2 ring-white">
                                 <span x-text="getCartQty({{ $product->id }})"></span>
                             </span>
                         </div>
                     </div>
 
-                    {{-- Info del producto --}}
-                    <div class="p-3 text-center">
-                        <h3 class="font-bold text-cookie-900 text-sm leading-tight">
-                            {{ $product->name }}
-                        </h3>
-                        <p class="text-cookie-500 text-xs font-semibold mt-1">
-                            {{ $product->formatted_price }}
-                        </p>
+                    <div class="p-3 text-center border-t border-cookie-100">
+                        <h3 class="font-bold text-cookie-900 text-sm leading-tight">{{ $product->name }}</h3>
+                        <p class="text-cookie-500 text-xs font-semibold mt-1">{{ $product->formatted_price }}</p>
                     </div>
                 </div>
             @endforeach
         </div>
     </div>
 
-    {{-- ═══════════════════════════════════════ --}}
-    {{-- ══ COLUMNA DERECHA — CARRITO / PEDIDO ══ --}}
-    {{-- ═══════════════════════════════════════ --}}
+    {{-- COLUMNA DERECHA — CARRITO --}}
     <div class="w-full lg:w-96 lg:sticky lg:top-24 lg:self-start">
         <div class="bg-white rounded-2xl shadow-xl border border-cookie-200 overflow-hidden">
 
-            {{-- Header carrito --}}
             <div class="bg-gradient-to-r from-cookie-600 to-cookie-500 p-5 text-white">
                 <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-extrabold flex items-center gap-2">
-                        🛒 Pedido Actual
-                    </h3>
-                    <span x-show="cart.length > 0"
-                          class="bg-white/20 px-3 py-1 rounded-full text-sm font-bold">
+                    <h3 class="text-lg font-extrabold">🛒 Pedido Actual</h3>
+                    <span x-show="cart.length > 0" class="bg-white/20 px-3 py-1 rounded-full text-sm font-bold">
                         <span x-text="totalItems"></span> galleta<span x-show="totalItems !== 1">s</span>
                     </span>
                 </div>
-                <p x-show="saleType === 'bowl'" class="text-cookie-100 text-xs mt-1">
-                    🥣 Modo Bowl — <span x-text="totalItems"></span>/6 seleccionadas
-                </p>
             </div>
 
-            {{-- Lista de items --}}
-            <div class="p-4 max-h-64 overflow-y-auto cart-scroll">
-
-                {{-- Carrito vacío --}}
+            <div class="p-4 max-h-72 overflow-y-auto cart-scroll">
                 <div x-show="cart.length === 0" class="text-center py-8">
-                    <span class="text-4xl">🍪</span>
-                    <p class="text-cookie-400 text-sm mt-2">Toca una galleta para agregarla</p>
+                    <span class="text-5xl block mb-3">🍪</span>
+                    <p class="text-cookie-400 text-sm">Toca una galleta para agregarla</p>
                 </div>
 
-                {{-- Items --}}
                 <template x-for="(item, index) in cart" :key="item.product_id">
-                    <div class="flex items-center gap-3 py-3 border-b border-cookie-100 last:border-0
-                                animate-slide-up">
-
-                        {{-- Mini avatar --}}
-                        <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
-                             :style="'background:' + item.color + '33'">
-                            🍪
+                    <div class="flex items-center gap-3 py-3 border-b border-cookie-100 last:border-0 animate-slide-up">
+                        <div class="w-11 h-11 rounded-xl overflow-hidden flex-shrink-0 shadow-sm border border-cookie-100">
+                            <template x-if="item.image">
+                                <img :src="item.image" :alt="item.name" class="w-full h-full object-cover" />
+                            </template>
+                            <template x-if="!item.image">
+                                <div class="w-full h-full flex items-center justify-center text-lg"
+                                     :style="'background:' + item.color + '22'">🍪</div>
+                            </template>
                         </div>
 
-                        {{-- Nombre --}}
                         <div class="flex-1 min-w-0">
-                            <p class="text-sm font-semibold text-cookie-900 truncate"
-                               x-text="item.name"></p>
-                            <p class="text-xs text-cookie-400"
-                               x-text="'$' + (item.price).toLocaleString('es-CO') + ' c/u'"></p>
+                            <p class="text-sm font-semibold text-cookie-900 truncate" x-text="item.name"></p>
+                            <p class="text-xs text-cookie-400" x-text="'$' + (item.price).toLocaleString('es-CO') + ' c/u'"></p>
                         </div>
 
-                        {{-- Controles de cantidad --}}
                         <div class="flex items-center gap-1">
                             <button @click="decrementItem(index)"
-                                    class="w-7 h-7 rounded-lg bg-cookie-100 text-cookie-700
-                                           hover:bg-cookie-200 flex items-center justify-center
-                                           text-sm font-bold transition">
-                                −
-                            </button>
-                            <span class="w-7 text-center text-sm font-extrabold text-cookie-800"
-                                  x-text="item.quantity"></span>
+                                    class="w-7 h-7 rounded-lg bg-cookie-100 text-cookie-700 hover:bg-red-100 hover:text-red-600
+                                           flex items-center justify-center text-sm font-bold transition">−</button>
+                            <span class="w-7 text-center text-sm font-extrabold text-cookie-800" x-text="item.quantity"></span>
                             <button @click="incrementItem(index)"
-                                    class="w-7 h-7 rounded-lg bg-cookie-100 text-cookie-700
-                                           hover:bg-cookie-200 flex items-center justify-center
-                                           text-sm font-bold transition">
-                                +
-                            </button>
+                                    class="w-7 h-7 rounded-lg bg-cookie-100 text-cookie-700 hover:bg-green-100 hover:text-green-600
+                                           flex items-center justify-center text-sm font-bold transition">+</button>
                         </div>
 
-                        {{-- Subtotal --}}
                         <span class="text-sm font-bold text-cookie-700 w-20 text-right"
-                              x-text="'$' + (item.price * item.quantity).toLocaleString('es-CO')">
-                        </span>
+                              x-text="'$' + (item.price * item.quantity).toLocaleString('es-CO')"></span>
 
-                        {{-- Eliminar --}}
-                        <button @click="removeFromCart(index)"
-                                class="text-red-400 hover:text-red-600 transition ml-1">
+                        <button @click="removeFromCart(index)" class="text-red-300 hover:text-red-600 transition ml-1">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M6 18L18 6M6 6l12 12"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                             </svg>
                         </button>
                     </div>
                 </template>
             </div>
 
-            {{-- ═══ MÉTODO DE PAGO ═══ --}}
-            <div x-show="cart.length > 0" class="px-4 pb-4" x-transition>
-                <label class="block text-xs font-semibold text-cookie-600 mb-2 uppercase tracking-wide">
-                    Método de Pago
-                </label>
+            {{-- MÉTODO DE PAGO --}}
+            <div x-show="cart.length > 0 && !isFiado" class="px-4 pb-4" x-transition>
+                <label class="block text-xs font-semibold text-cookie-600 mb-2 uppercase tracking-wide">Método de Pago</label>
                 <div class="grid grid-cols-3 gap-2">
                     <button @click="paymentMethod = 'efectivo'"
-                            :class="paymentMethod === 'efectivo'
-                                    ? 'bg-green-100 border-green-500 text-green-800 ring-2 ring-green-300'
-                                    : 'bg-white border-gray-200 text-gray-600 hover:border-green-300'"
+                            :class="paymentMethod === 'efectivo' ? 'bg-green-50 border-green-500 ring-2 ring-green-300' : 'bg-white border-gray-200'"
                             class="p-3 rounded-xl border-2 text-center transition-all duration-200">
-                        <span class="text-xl block">💵</span>
-                        <span class="text-xs font-semibold block mt-1">Efectivo</span>
+                        <span class="text-2xl block">💵</span>
+                        <span class="text-xs font-bold block mt-1">Efectivo</span>
                     </button>
                     <button @click="paymentMethod = 'nequi'"
-                            :class="paymentMethod === 'nequi'
-                                    ? 'bg-purple-100 border-purple-500 text-purple-800 ring-2 ring-purple-300'
-                                    : 'bg-white border-gray-200 text-gray-600 hover:border-purple-300'"
+                            :class="paymentMethod === 'nequi' ? 'bg-purple-50 border-purple-500 ring-2 ring-purple-300' : 'bg-white border-gray-200'"
                             class="p-3 rounded-xl border-2 text-center transition-all duration-200">
-                        <span class="text-xl block">💜</span>
-                        <span class="text-xs font-semibold block mt-1">Nequi</span>
+                        <span class="text-2xl block">💜</span>
+                        <span class="text-xs font-bold block mt-1">Nequi</span>
                     </button>
                     <button @click="paymentMethod = 'daviplata'"
-                            :class="paymentMethod === 'daviplata'
-                                    ? 'bg-orange-100 border-orange-500 text-orange-800 ring-2 ring-orange-300'
-                                    : 'bg-white border-gray-200 text-gray-600 hover:border-orange-300'"
+                            :class="paymentMethod === 'daviplata' ? 'bg-orange-50 border-orange-500 ring-2 ring-orange-300' : 'bg-white border-gray-200'"
                             class="p-3 rounded-xl border-2 text-center transition-all duration-200">
-                        <span class="text-xl block">🧡</span>
-                        <span class="text-xs font-semibold block mt-1">Daviplata</span>
+                        <span class="text-2xl block">🧡</span>
+                        <span class="text-xs font-bold block mt-1">Daviplata</span>
                     </button>
                 </div>
             </div>
 
-            {{-- ═══ TOTAL Y BOTÓN ═══ --}}
+            {{-- TOTAL Y BOTONES --}}
             <div x-show="cart.length > 0" class="border-t border-cookie-200 p-4" x-transition>
-
-                {{-- Línea de total --}}
                 <div class="flex justify-between items-center mb-4">
-                    <span class="text-cookie-600 font-semibold">Total:</span>
-                    <span class="text-2xl font-extrabold text-cookie-900"
-                          x-text="'$' + totalPrice.toLocaleString('es-CO')">
-                    </span>
+                    <span class="text-cookie-600 font-semibold text-lg">Total:</span>
+                    <span class="text-3xl font-extrabold text-cookie-900" x-text="'$' + totalPrice.toLocaleString('es-CO')"></span>
                 </div>
 
-                {{-- Advertencia Bowl --}}
                 <div x-show="saleType === 'bowl' && totalItems !== 6"
-                     class="mb-3 p-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700 text-center">
-                    ⚠️ Necesitas seleccionar exactamente <strong>6 galletas</strong> para el Bowl
+                     class="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-700 text-center">
+                    ⚠️ Necesitas <strong>6 galletas</strong> para el Bowl
                 </div>
 
-                {{-- Botón de confirmar --}}
-                <button @click="checkout()"
+                {{-- Toggle Fiado --}}
+                <div class="mb-4 flex items-center justify-between p-3 bg-cookie-50 rounded-xl">
+                    <span class="text-sm font-semibold text-cookie-700">📋 ¿Venta fiada?</span>
+                    <button @click="isFiado = !isFiado; if(!isFiado) selectedDebtor = null;"
+                            :class="isFiado ? 'bg-amber-500' : 'bg-gray-300'"
+                            class="relative w-12 h-6 rounded-full transition-colors">
+                        <span :class="isFiado ? 'translate-x-6' : 'translate-x-1'"
+                              class="absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform"></span>
+                    </button>
+                </div>
+
+                {{-- Selector de deudor --}}
+                <div x-show="isFiado" class="mb-4" x-transition>
+                    <label class="block text-xs font-semibold text-cookie-600 mb-2 uppercase tracking-wide">Seleccionar Deudor</label>
+
+                    <div x-show="!selectedDebtor" class="space-y-2">
+                        <select @change="selectDebtor($event.target.value)" x-ref="debtorSelect"
+                                class="w-full px-4 py-3 rounded-xl border border-cookie-200 text-cookie-900
+                                       focus:ring-2 focus:ring-cookie-500 focus:border-cookie-500">
+                            <option value="">-- Seleccionar deudor --</option>
+                            <template x-for="debtor in debtors" :key="debtor.id">
+                                <option :value="debtor.id" x-text="debtor.name + (debtor.total_pending > 0 ? ' (Debe: ' + debtor.formatted_pending + ')' : '')"></option>
+                            </template>
+                        </select>
+                        <button @click="showNewDebtorModal = true"
+                                class="w-full py-2 text-cookie-500 hover:text-cookie-700 text-sm font-medium">
+                            ➕ Crear nuevo deudor
+                        </button>
+                    </div>
+
+                    <div x-show="selectedDebtor" class="p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="font-bold text-amber-800" x-text="selectedDebtor?.name"></p>
+                                <p x-show="selectedDebtor?.total_pending > 0" class="text-xs text-amber-600"
+                                   x-text="'Deuda actual: ' + selectedDebtor?.formatted_pending"></p>
+                            </div>
+                            <button @click="selectedDebtor = null; $refs.debtorSelect.value = ''"
+                                    class="text-amber-500 hover:text-amber-700">✕</button>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Botón Cobrar / Fiar --}}
+                <button @click="isFiado ? createDebt() : checkout()"
                         :disabled="!canCheckout || processing"
                         :class="canCheckout && !processing
-                                ? 'bg-gradient-to-r from-cookie-600 to-cookie-500 hover:from-cookie-700 hover:to-cookie-600 shadow-lg hover:shadow-xl'
+                                ? (isFiado ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700' : 'bg-gradient-to-r from-cookie-600 to-cookie-500 hover:from-cookie-700 hover:to-cookie-600')
                                 : 'bg-gray-300 cursor-not-allowed'"
-                        class="w-full py-4 rounded-xl text-white font-extrabold text-lg
-                               transition-all duration-200 flex items-center justify-center gap-2">
-                    <template x-if="processing">
-                        <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                        </svg>
-                    </template>
+                        class="w-full py-4 rounded-xl text-white font-extrabold text-lg shadow-lg transition-all duration-200 flex items-center justify-center gap-2">
                     <span x-show="!processing">
-                        <span x-show="saleType === 'individual'">🍪 Cobrar</span>
-                        <span x-show="saleType === 'bowl'">🥣 Cobrar Bowl</span>
+                        <span x-show="!isFiado && saleType === 'individual'">🍪 Cobrar</span>
+                        <span x-show="!isFiado && saleType === 'bowl'">🥣 Cobrar Bowl</span>
+                        <span x-show="isFiado">📋 Registrar Fiado</span>
                     </span>
                     <span x-show="processing">Procesando...</span>
                 </button>
 
-                {{-- Limpiar --}}
                 <button @click="clearCart()"
                         class="w-full mt-2 py-2 text-cookie-400 hover:text-red-500 text-sm font-medium transition">
                     🗑️ Vaciar pedido
@@ -285,13 +263,48 @@
             </div>
         </div>
 
-        {{-- ═══ ÚLTIMA VENTA ═══ --}}
+        {{-- Notificación última venta --}}
         <div x-show="lastSale" x-transition class="mt-4">
-            <div class="bg-green-50 border border-green-200 rounded-2xl p-4 text-center animate-slide-up">
-                <span class="text-3xl">✅</span>
-                <p class="text-green-800 font-bold mt-1" x-text="lastSale?.message"></p>
-                <p class="text-green-600 text-sm" x-text="'Total: ' + lastSale?.total"></p>
+            <div :class="lastSale?.isFiado ? 'bg-amber-50 border-amber-300' : 'bg-green-50 border-green-300'"
+                 class="border-2 rounded-2xl p-5 text-center shadow-lg">
+                <span class="text-4xl block" x-text="lastSale?.isFiado ? '📋' : '✅'"></span>
+                <p :class="lastSale?.isFiado ? 'text-amber-800' : 'text-green-800'" class="font-extrabold text-lg mt-2" x-text="lastSale?.message"></p>
+                <p :class="lastSale?.isFiado ? 'text-amber-600' : 'text-green-600'" class="text-sm font-medium" x-text="'Total: ' + lastSale?.total"></p>
             </div>
+        </div>
+    </div>
+
+    {{-- MODAL NUEVO DEUDOR --}}
+    <div x-show="showNewDebtorModal" x-cloak
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+         x-transition>
+        <div @click.away="showNewDebtorModal = false"
+             class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 animate-slide-up">
+            <h3 class="text-lg font-extrabold text-cookie-900 mb-4">➕ Nuevo Deudor</h3>
+
+            <form @submit.prevent="createNewDebtor">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-cookie-700 mb-2">Nombre *</label>
+                        <input type="text" x-model="newDebtorName" required
+                               class="w-full px-4 py-3 rounded-xl border border-cookie-200 focus:ring-2 focus:ring-cookie-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-cookie-700 mb-2">Teléfono</label>
+                        <input type="tel" x-model="newDebtorPhone"
+                               class="w-full px-4 py-3 rounded-xl border border-cookie-200 focus:ring-2 focus:ring-cookie-500">
+                    </div>
+                </div>
+
+                <div class="flex gap-3 mt-6">
+                    <button type="button" @click="showNewDebtorModal = false"
+                            class="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl font-bold">Cancelar</button>
+                    <button type="submit" :disabled="!newDebtorName"
+                            class="flex-1 py-3 bg-cookie-500 text-white rounded-xl font-bold hover:bg-cookie-600 transition">
+                        Guardar
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -306,31 +319,78 @@ function posSystem() {
         saleType: 'individual',
         processing: false,
         lastSale: null,
+        localStock: @json($products->pluck('available_stock', 'id')),
 
-        // Stock local para actualizar en tiempo real sin recargar
-        localStock: @json($products->mapWithKeys(fn ($p) => [$p->id => $p->available_stock])),
+        // Fiado
+        isFiado: false,
+        debtors: [],
+        selectedDebtor: null,
+        showNewDebtorModal: false,
+        newDebtorName: '',
+        newDebtorPhone: '',
 
-        // ── Tipo de venta ──
+        init() {
+            this.loadDebtors();
+        },
+
+        async loadDebtors() {
+            try {
+                const response = await fetch('/api/deudores');
+                this.debtors = await response.json();
+            } catch (e) {
+                console.error('Error loading debtors:', e);
+            }
+        },
+
+        selectDebtor(id) {
+            if (!id) {
+                this.selectedDebtor = null;
+                return;
+            }
+            this.selectedDebtor = this.debtors.find(d => d.id == id);
+        },
+
+        async createNewDebtor() {
+            if (!this.newDebtorName) return;
+
+            try {
+                const response = await fetch('{{ route("deudores.store") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: this.newDebtorName,
+                        phone: this.newDebtorPhone,
+                    }),
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    await this.loadDebtors();
+                    this.selectedDebtor = data.debtor;
+                    this.showNewDebtorModal = false;
+                    this.newDebtorName = '';
+                    this.newDebtorPhone = '';
+                }
+            } catch (e) {
+                console.error('Error creating debtor:', e);
+            }
+        },
+
         switchType(type) {
             this.saleType = type;
             this.clearCart();
         },
 
-        // ── Agregar al carrito ──
         addToCart(product) {
+            if (product.stock === 0) return;
             const currentStock = this.localStock[product.id] || 0;
             const inCart = this.getCartQty(product.id);
-
-            if (currentStock <= inCart) {
-                this.shake();
-                return;
-            }
-
-            // En modo Bowl, no pasar de 6
-            if (this.saleType === 'bowl' && this.totalItems >= 6) {
-                this.shake();
-                return;
-            }
+            if (currentStock <= inCart) return;
+            if (this.saleType === 'bowl' && this.totalItems >= 6) return;
 
             const existing = this.cart.find(i => i.product_id === product.id);
             if (existing) {
@@ -341,20 +401,17 @@ function posSystem() {
                     name: product.name,
                     price: product.price,
                     quantity: 1,
-                    max_stock: currentStock,
+                    image: product.image,
                     color: product.color,
                 });
             }
         },
 
-        // ── Controles de cantidad ──
         incrementItem(index) {
             const item = this.cart[index];
             const currentStock = this.localStock[item.product_id] || 0;
-
             if (item.quantity >= currentStock) return;
             if (this.saleType === 'bowl' && this.totalItems >= 6) return;
-
             item.quantity++;
         },
 
@@ -373,15 +430,15 @@ function posSystem() {
         clearCart() {
             this.cart = [];
             this.paymentMethod = '';
+            this.isFiado = false;
+            this.selectedDebtor = null;
         },
 
-        // ── Obtener cantidad de un producto en carrito ──
         getCartQty(productId) {
             const item = this.cart.find(i => i.product_id === productId);
             return item ? item.quantity : 0;
         },
 
-        // ── Cálculos ──
         get totalItems() {
             return this.cart.reduce((sum, i) => sum + i.quantity, 0);
         },
@@ -393,15 +450,15 @@ function posSystem() {
 
         get canCheckout() {
             if (this.cart.length === 0) return false;
-            if (!this.paymentMethod) return false;
             if (this.saleType === 'bowl' && this.totalItems !== 6) return false;
-            return true;
+            if (this.isFiado) {
+                return this.selectedDebtor !== null;
+            }
+            return this.paymentMethod !== '';
         },
 
-        // ── Procesar venta ──
         async checkout() {
             if (!this.canCheckout || this.processing) return;
-
             this.processing = true;
             this.lastSale = null;
 
@@ -416,41 +473,62 @@ function posSystem() {
                     body: JSON.stringify({
                         sale_type: this.saleType,
                         payment_method: this.paymentMethod,
-                        items: this.cart.map(i => ({
-                            product_id: i.product_id,
-                            quantity: i.quantity,
-                        })),
+                        items: this.cart.map(i => ({ product_id: i.product_id, quantity: i.quantity })),
                     }),
                 });
 
                 const data = await response.json();
-
                 if (data.success) {
-                    // Actualizar stock local
-                    this.cart.forEach(item => {
-                        this.localStock[item.product_id] -= item.quantity;
-                    });
-
-                    this.lastSale = data;
+                    this.cart.forEach(item => { this.localStock[item.product_id] -= item.quantity; });
+                    this.lastSale = { ...data, isFiado: false };
                     this.clearCart();
-
-                    // Ocultar el mensaje después de 4 segundos
                     setTimeout(() => { this.lastSale = null; }, 4000);
                 } else {
-                    alert('❌ ' + (data.message || 'Error al procesar la venta'));
+                    alert('❌ ' + (data.message || 'Error'));
                 }
-            } catch (error) {
+            } catch (e) {
                 alert('❌ Error de conexión');
-                console.error(error);
             } finally {
                 this.processing = false;
             }
         },
 
-        // ── Feedback visual ──
-        shake() {
-            // Pequeño feedback si no se puede agregar
-        }
+        async createDebt() {
+            if (!this.canCheckout || this.processing) return;
+            this.processing = true;
+            this.lastSale = null;
+
+            try {
+                const response = await fetch('{{ route("api.deudores.debt") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        debtor_id: this.selectedDebtor.id,
+                        sale_type: this.saleType,
+                        items: this.cart.map(i => ({ product_id: i.product_id, quantity: i.quantity })),
+                    }),
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    this.cart.forEach(item => { this.localStock[item.product_id] -= item.quantity; });
+                    this.lastSale = { ...data, isFiado: true };
+                    this.clearCart();
+                    this.loadDebtors();
+                    setTimeout(() => { this.lastSale = null; }, 4000);
+                } else {
+                    alert('❌ ' + (data.message || 'Error'));
+                }
+            } catch (e) {
+                alert('❌ Error de conexión');
+            } finally {
+                this.processing = false;
+            }
+        },
     };
 }
 </script>
