@@ -2,8 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\JsonStorage;
+use App\Models\Product;
+use App\Models\Sale;
+use App\Models\SaleItem;
+use App\Models\Stock;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class SaleController extends Controller
 {
@@ -12,7 +16,7 @@ class SaleController extends Controller
      */
     public function index()
     {
-        $products = JsonStorage::getProducts();
+        $products = Product::with('stock')->active()->get();
 
         return view('ventas.index', compact('products'));
     }
@@ -30,7 +34,7 @@ class SaleController extends Controller
             'items.*.quantity'   => 'required|integer|min:1',
         ]);
 
-        // ── Validar Bowl = exactamente 6 ──
+        // Validar Bowl = exactamente 6
         if ($validated['sale_type'] === 'bowl') {
             $totalItems = collect($validated['items'])->sum('quantity');
             if ($totalItems !== 6) {
@@ -41,66 +45,62 @@ class SaleController extends Controller
             }
         }
 
-        // ── Leer stock actual ──
-        $stock = JsonStorage::getStock();
+        // Verificar stock y armar items
         $saleItems = [];
-        $total = 0;
+        $total     = 0;
 
         foreach ($validated['items'] as $item) {
-            $product = JsonStorage::findProduct($item['product_id']);
+            $product = Product::find($item['product_id']);
 
             if (!$product) {
+                return response()->json(['success' => false, 'message' => 'Producto no encontrado.'], 422);
+            }
+
+            $stock = Stock::where('product_id', $product->id)->lockForUpdate()->first();
+            if (!$stock || $stock->quantity < $item['quantity']) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Producto no encontrado.',
+                    'message' => "Stock insuficiente para {$product->name}. Disponible: " . ($stock?->quantity ?? 0),
                 ], 422);
             }
 
-            // Verificar stock
-            $currentStock = $stock[$item['product_id']] ?? 0;
-            if ($currentStock < $item['quantity']) {
-                return response()->json([
-                    'success' => false,
-                    'message' => "Stock insuficiente para {$product->name}. Disponible: {$currentStock}",
-                ], 422);
-            }
-
-            $unitPrice = $product->price;
-            $subtotal  = $unitPrice * $item['quantity'];
-
-            $saleItems[] = [
-                'product_id' => $item['product_id'],
-                'quantity'   => $item['quantity'],
-                'unit_price' => $unitPrice,
-                'subtotal'   => $subtotal,
-            ];
-
-            $total += $subtotal;
+            $unitPrice  = $product->price;
+            $subtotal   = $unitPrice * $item['quantity'];
+            $saleItems[] = ['product' => $product, 'stock' => $stock, 'item' => $item, 'unit_price' => $unitPrice, 'subtotal' => $subtotal];
+            $total      += $subtotal;
         }
 
-        // ── Bowl siempre $60.000 ──
         if ($validated['sale_type'] === 'bowl') {
             $total = 60000;
         }
 
-        // ── Descontar stock ──
-        foreach ($validated['items'] as $item) {
-            $stock[$item['product_id']] -= $item['quantity'];
-        }
-        JsonStorage::saveStock($stock);
+        // Guardar todo en transacción
+        $sale = DB::transaction(function () use ($validated, $saleItems, $total) {
+            $sale = Sale::create([
+                'sale_type'      => $validated['sale_type'],
+                'total'          => $total,
+                'payment_method' => $validated['payment_method'],
+            ]);
 
-        // ── Guardar venta en JSON ──
-        $saleId = JsonStorage::addSale([
-            'sale_type'      => $validated['sale_type'],
-            'total'          => $total,
-            'payment_method' => $validated['payment_method'],
-            'items'          => $saleItems,
-        ]);
+            foreach ($saleItems as $entry) {
+                SaleItem::create([
+                    'sale_id'    => $sale->id,
+                    'product_id' => $entry['item']['product_id'],
+                    'quantity'   => $entry['item']['quantity'],
+                    'unit_price' => $entry['unit_price'],
+                    'subtotal'   => $entry['subtotal'],
+                ]);
+
+                $entry['stock']->decrement('quantity', $entry['item']['quantity']);
+            }
+
+            return $sale;
+        });
 
         return response()->json([
             'success' => true,
             'message' => '¡Venta registrada exitosamente! 🍪',
-            'sale_id' => $saleId,
+            'sale_id' => $sale->id,
             'total'   => '$' . number_format($total, 0, ',', '.'),
         ]);
     }

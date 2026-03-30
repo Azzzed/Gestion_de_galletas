@@ -10,15 +10,12 @@ return new class extends Migration
     {
         Schema::create('sales', function (Blueprint $table) {
             $table->id();
-            $table->enum('sale_type', ['individual', 'bowl']); // Tipo de venta
-            $table->unsignedInteger('total');                    // Total en COP
-            $table->enum('payment_method', [
-                'efectivo',
-                'nequi',
-                'daviplata'
-            ]);
+            $table->string('sale_type');           // individual | bowl | debt_payment
+            $table->unsignedInteger('total');
+            $table->string('payment_method');      // efectivo | nequi | daviplata
+            $table->unsignedBigInteger('debt_id')->nullable(); // solo para debt_payment
             $table->text('notes')->nullable();
-            $table->timestamps();                               // created_at = hora de venta
+            $table->timestamps();
         });
     }
 

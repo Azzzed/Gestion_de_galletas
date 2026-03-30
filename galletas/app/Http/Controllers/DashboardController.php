@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\JsonStorage;
+use App\Models\Debt;
+use App\Models\Product;
+use App\Models\Sale;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
@@ -11,25 +13,33 @@ class DashboardController extends Controller
     {
         $date = $request->get('date', today()->toDateString());
 
-        $sales = JsonStorage::getSalesByDate($date);
+        // ── Totales por método de pago ──────────────────────────
+        $salesByMethod = Sale::whereDate('created_at', $date)
+            ->selectRaw('payment_method, SUM(total) as total')
+            ->groupBy('payment_method')
+            ->pluck('total', 'payment_method');
 
-        // Excluir pagos de deuda del conteo normal
-        $normalSales = $sales->filter(fn($s) => ($s->sale_type ?? '') !== 'debt_payment');
-
-        $totalEfectivo  = $sales->where('payment_method', 'efectivo')->sum('total');
-        $totalNequi     = $sales->where('payment_method', 'nequi')->sum('total');
-        $totalDaviplata = $sales->where('payment_method', 'daviplata')->sum('total');
+        $totalEfectivo  = (int) ($salesByMethod['efectivo']  ?? 0);
+        $totalNequi     = (int) ($salesByMethod['nequi']     ?? 0);
+        $totalDaviplata = (int) ($salesByMethod['daviplata'] ?? 0);
         $totalGeneral   = $totalEfectivo + $totalNequi + $totalDaviplata;
+
+        // ── Conteos de ventas normales ──────────────────────────
+        $normalSales  = Sale::with(['items.product'])
+            ->whereDate('created_at', $date)
+            ->whereIn('sale_type', ['individual', 'bowl'])
+            ->get();
 
         $totalVentas      = $normalSales->count();
         $ventasIndividual = $normalSales->where('sale_type', 'individual')->count();
         $ventasBowl       = $normalSales->where('sale_type', 'bowl')->count();
 
-        // Pagos de deudas del día
-        $debtPayments = JsonStorage::getDebtPaymentsByDate($date);
-        $totalDebtPayments = $debtPayments->sum('total');
+        // ── Pagos de deudas del día ─────────────────────────────
+        $totalDebtPayments = (int) Sale::whereDate('created_at', $date)
+            ->where('sale_type', 'debt_payment')
+            ->sum('total');
 
-        // Ranking
+        // ── Ranking de galletas ─────────────────────────────────
         $ranking = $normalSales
             ->flatMap(fn($s) => $s->items)
             ->groupBy('product_id')
@@ -43,10 +53,12 @@ class DashboardController extends Controller
             ->sortByDesc('total_vendidas')
             ->values();
 
-        $latestSales = $normalSales->sortByDesc(fn($s) => $s->created_at)->take(20)->values();
+        $latestSales = $normalSales->sortByDesc('created_at')->take(20)->values();
 
-        // Total deudas pendientes
-        $totalPendingDebts = JsonStorage::getTotalPendingDebts();
+        // ── Total deudas pendientes ─────────────────────────────
+        $totalPendingDebts = (int) Debt::where('status', '!=', 'paid')
+            ->selectRaw('SUM(total - paid_amount) as total')
+            ->value('total') ?? 0;
 
         return view('dashboard.index', compact(
             'date',

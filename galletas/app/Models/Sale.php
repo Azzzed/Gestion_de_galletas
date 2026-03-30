@@ -8,17 +8,17 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Sale extends Model
 {
     protected $fillable = [
-        'sale_type',
+        'sale_type',     // individual | bowl | debt_payment
         'total',
         'payment_method',
+        'debt_id',
         'notes',
     ];
 
     protected $casts = [
-        'total' => 'integer',
+        'total'   => 'integer',
+        'debt_id' => 'integer',
     ];
-
-    // ── Relación ──
 
     public function items(): HasMany
     {
@@ -34,7 +34,11 @@ class Sale extends Model
 
     public function getSaleTypeLabelAttribute(): string
     {
-        return $this->sale_type === 'bowl' ? 'Bowl de 6' : 'Individual';
+        return match ($this->sale_type) {
+            'bowl'         => 'Bowl de 6',
+            'debt_payment' => 'Pago de deuda',
+            default        => 'Individual',
+        };
     }
 
     public function getPaymentLabelAttribute(): string
@@ -54,8 +58,13 @@ class Sale extends Model
         return $query->whereDate('created_at', today());
     }
 
-    public function scopeByPayment($query, string $method)
+    public function scopeNormal($query)
     {
-        return $query->where('payment_method', $method);
+        return $query->whereIn('sale_type', ['individual', 'bowl']);
+    }
+
+    public function scopeDebtPayments($query)
+    {
+        return $query->where('sale_type', 'debt_payment');
     }
 }
