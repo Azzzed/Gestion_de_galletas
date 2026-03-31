@@ -3,68 +3,112 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Builder;
 
 class Sale extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
-        'sale_type',     // individual | bowl | debt_payment
-        'total',
-        'payment_method',
-        'debt_id',
-        'notes',
+        'customer_id', 'numero_factura', 'subtotal',
+        'descuento', 'descuento_porcentaje', 'total',
+        'metodo_pago', 'metodos_pago', 'estado',
+        'tiene_deuda', 'notas', 'cajero_id',
     ];
 
     protected $casts = [
-        'total'   => 'integer',
-        'debt_id' => 'integer',
+        'subtotal'             => 'decimal:2',
+        'descuento'            => 'decimal:2',
+        'descuento_porcentaje' => 'decimal:2',
+        'total'                => 'decimal:2',
+        'metodos_pago'         => 'array',
+        'tiene_deuda'          => 'boolean',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (Sale $sale) {
+            if (empty($sale->numero_factura)) {
+                $ultimo = static::withTrashed()->max('id') ?? 0;
+                $sale->numero_factura = 'CC-' . str_pad($ultimo + 1, 6, '0', STR_PAD_LEFT);
+            }
+        });
+    }
+
+    // ── Relaciones ───────────────────────────────────────────────
+
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class);
+    }
 
     public function items(): HasMany
     {
         return $this->hasMany(SaleItem::class);
     }
 
-    // ── Accessors ──
+    public function debts(): HasMany
+    {
+        return $this->hasMany(Debt::class);
+    }
 
-    public function getFormattedTotalAttribute(): string
+    // ── Accessors ────────────────────────────────────────────────
+
+    public function getTotalFormateadoAttribute(): string
     {
         return '$' . number_format($this->total, 0, ',', '.');
     }
 
-    public function getSaleTypeLabelAttribute(): string
+    public function getEsMostradorAttribute(): bool
     {
-        return match ($this->sale_type) {
-            'bowl'         => 'Bowl de 6',
-            'debt_payment' => 'Pago de deuda',
-            default        => 'Individual',
-        };
+        return $this->customer_id === Customer::MOSTRADOR_ID;
     }
 
-    public function getPaymentLabelAttribute(): string
+    public function getTotalItemsAttribute(): int
     {
-        return match ($this->payment_method) {
-            'efectivo'  => '💵 Efectivo',
-            'nequi'     => '💜 Nequi',
-            'daviplata' => '🧡 Daviplata',
-            default     => $this->payment_method,
-        };
+        return $this->items->sum('cantidad');
     }
 
-    // ── Scopes ──
+    // ── Scopes ───────────────────────────────────────────────────
 
-    public function scopeToday($query)
+    public function scopeCompletadas(Builder $query): Builder
     {
-        return $query->whereDate('created_at', today());
+        return $query->where('estado', 'completada');
     }
 
-    public function scopeNormal($query)
+    public function scopePorPeriodo(Builder $query, string $desde, string $hasta): Builder
     {
-        return $query->whereIn('sale_type', ['individual', 'bowl']);
+        return $query->whereBetween('created_at', [$desde, $hasta]);
     }
 
-    public function scopeDebtPayments($query)
+    public function scopeDeMostrador(Builder $query): Builder
     {
-        return $query->where('sale_type', 'debt_payment');
+        return $query->where('customer_id', Customer::MOSTRADOR_ID);
+    }
+
+    public function scopeDeClientesEspecificos(Builder $query): Builder
+    {
+        return $query->where('customer_id', '!=', Customer::MOSTRADOR_ID);
+    }
+
+    // ── Helpers ──────────────────────────────────────────────────
+
+    public function recalcularTotales(): void
+    {
+        $subtotal  = $this->items->sum('subtotal');
+        $descuento = round($subtotal * ($this->descuento_porcentaje / 100), 2);
+        $this->update([
+            'subtotal'  => $subtotal,
+            'descuento' => $descuento,
+            'total'     => $subtotal - $descuento,
+        ]);
+    }
+
+    public function anular(string $motivo = ''): void
+    {
+        $this->update(['estado' => 'anulada', 'notas' => $motivo]);
     }
 }

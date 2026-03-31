@@ -1,11 +1,10 @@
-
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>🍪 @yield('title', 'Galletas Valen Lo Mismo')</title>
+    <title>@yield('title', 'CapyCrunch') — Sistema de Gestión</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -13,111 +12,107 @@
             theme: {
                 extend: {
                     colors: {
-                        cookie: {
-                            50:  '#FFF8F0',
-                            100: '#FFEDD5',
-                            200: '#FED7AA',
-                            300: '#FDBA74',
-                            400: '#FB923C',
-                            500: '#F97316',
-                            600: '#EA580C',
-                            700: '#C2410C',
-                            800: '#9A3412',
-                            900: '#7C2D12',
+                        capy: {
+                            50:  '#fdf8f3',
+                            100: '#faefd9',
+                            200: '#f5ddb0',
+                            300: '#edc47c',
+                            400: '#e4a44a',
+                            500: '#d98a2e',
+                            600: '#c27020',
+                            700: '#a1551b',
+                            800: '#83441d',
+                            900: '#6c391b',
+                            950: '#3c1d0c',
+                        },
+                        warm: {
+                            50:  '#fdfaf6',
+                            100: '#f8f1e4',
+                            200: '#ecdfc4',
                         }
-                    }
+                    },
+                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] }
                 }
             }
         }
     </script>
-
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
-        [x-cloak] { display: none !important; }
-        .card-bounce { transition: transform 0.15s ease, box-shadow 0.15s ease; }
-        .card-bounce:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,0.15); }
-        .card-bounce:active { transform: scale(0.97); }
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-        .animate-slide-up { animation: slideUp 0.3s ease forwards; }
-        .cart-scroll::-webkit-scrollbar { width: 6px; }
-        .cart-scroll::-webkit-scrollbar-track { background: #FFF8F0; border-radius: 3px; }
-        .cart-scroll::-webkit-scrollbar-thumb { background: #FDBA74; border-radius: 3px; }
-        @keyframes pulse-alert {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.6; }
-        }
-        .animate-pulse-alert { animation: pulse-alert 2s ease-in-out infinite; }
+        [x-cloak]  { display: none !important; }
+        * { transition-property: background-color,border-color,color,opacity,transform,box-shadow; transition-duration:150ms; }
+        .fade-in   { animation: fadeIn .2s ease-out; }
+        .slide-up  { animation: slideUp .25s cubic-bezier(.34,1.56,.64,1); }
+        @keyframes fadeIn  { from{opacity:0;transform:translateY(6px)}  to{opacity:1;transform:translateY(0)} }
+        @keyframes slideUp { from{opacity:0;transform:scale(.94) translateY(-6px)} to{opacity:1;transform:scale(1) translateY(0)} }
+        @keyframes ripple  { to{transform:scale(4);opacity:0} }
+        .btn-ripple { position:relative; overflow:hidden; }
+        .btn-ripple::after { content:''; position:absolute; border-radius:50%; background:rgba(255,255,255,.3); width:100px; height:100px; margin:auto; top:-50px; left:-50px; pointer-events:none; transform:scale(0); }
+        .btn-ripple:active::after { animation:ripple .35s ease-out; }
+        ::-webkit-scrollbar { width:5px; height:5px; }
+        ::-webkit-scrollbar-track { background:#f8f1e4; }
+        ::-webkit-scrollbar-thumb { background:#e4a44a; border-radius:3px; }
     </style>
+    @stack('styles')
 </head>
-<body class="bg-cookie-50 min-h-screen">
 
-    <nav class="bg-white/80 backdrop-blur-md border-b border-cookie-200 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16 items-center">
+<body class="h-full bg-warm-50 font-sans text-gray-800 antialiased">
 
-                <a href="{{ route('ventas.index') }}" class="flex items-center gap-3">
-                    <span class="text-3xl">🍪</span>
-                    <div>
-                        <h1 class="text-lg font-extrabold text-cookie-800 leading-tight">
-                            Galletas Valen Lo Mismo
-                        </h1>
-                        <p class="text-xs text-cookie-500 -mt-0.5">Todas a $10.000</p>
-                    </div>
+{{-- Navbar --}}
+<nav class="bg-capy-700 shadow-md sticky top-0 z-50">
+    <div class="max-w-screen-xl mx-auto px-4">
+        <div class="flex items-center justify-between h-14">
+            <a href="{{ route('pos.index') }}" class="flex items-center gap-2 text-white font-bold text-lg">
+                <span class="text-2xl">🐾</span>
+                <span class="hidden sm:block tracking-tight">CapyCrunch</span>
+            </a>
+
+            <div class="flex items-center gap-1">
+                @foreach([
+                    ['pos.index',            '🛒', 'POS'],
+                    ['admin.cookies.index',  '🍪', 'Galletas'],
+                    ['admin.customers.index','👥', 'Clientes'],
+                    ['admin.sales.index',    '📋', 'Ventas'],
+                ] as [$route, $icon, $label])
+                <a href="{{ route($route) }}"
+                   class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors
+                          {{ request()->routeIs(str_replace('.index','',$route).'.*') || request()->routeIs($route)
+                             ? 'bg-white/20 text-white'
+                             : 'text-white/75 hover:bg-white/15 hover:text-white' }}">
+                    <span class="mr-1">{{ $icon }}</span>
+                    <span class="hidden sm:inline">{{ $label }}</span>
                 </a>
-
-                <div class="flex items-center gap-1">
-                    <a href="{{ route('ventas.index') }}"
-                       class="px-4 py-2 rounded-lg text-sm font-medium transition
-                              {{ request()->routeIs('ventas.*') ? 'bg-cookie-500 text-white' : 'text-cookie-700 hover:bg-cookie-100' }}">
-                        🛒 Ventas
-                    </a>
-                    <a href="{{ route('inventario.index') }}"
-                       class="px-4 py-2 rounded-lg text-sm font-medium transition
-                              {{ request()->routeIs('inventario.*') ? 'bg-cookie-500 text-white' : 'text-cookie-700 hover:bg-cookie-100' }}">
-                        📦 Inventario
-                    </a>
-                    <a href="{{ route('deudores.index') }}"
-                       class="px-4 py-2 rounded-lg text-sm font-medium transition relative
-                              {{ request()->routeIs('deudores.*') ? 'bg-cookie-500 text-white' : 'text-cookie-700 hover:bg-cookie-100' }}">
-                        📋 Deudores
-                        @php
-                            $pendingCount = \App\Services\JsonStorage::getDebtors()->where('total_pending', '>', 0)->count();
-                        @endphp
-                        @if($pendingCount > 0)
-                            <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-                                {{ $pendingCount }}
-                            </span>
-                        @endif
-                    </a>
-                    <a href="{{ route('dashboard.index') }}"
-                       class="px-4 py-2 rounded-lg text-sm font-medium transition
-                              {{ request()->routeIs('dashboard.*') ? 'bg-cookie-500 text-white' : 'text-cookie-700 hover:bg-cookie-100' }}">
-                        📊 Dashboard
-                    </a>
-                </div>
+                @endforeach
             </div>
         </div>
-    </nav>
+    </div>
+</nav>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        @if(session('success'))
-            <div class="mb-4 p-4 bg-green-100 border border-green-300 rounded-xl text-green-800 text-sm animate-slide-up">
-                {{ session('success') }}
-            </div>
-        @endif
-        @if(session('error'))
-            <div class="mb-4 p-4 bg-red-100 border border-red-300 rounded-xl text-red-800 text-sm animate-slide-up">
-                {{ session('error') }}
-            </div>
-        @endif
+{{-- Flash messages --}}
+@if(session('success') || session('error'))
+<div class="max-w-screen-xl mx-auto px-4 pt-4" id="flash-msg">
+    @if(session('success'))
+    <div class="fade-in flex items-center gap-3 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-2xl shadow-sm">
+        <span class="text-xl">✅</span>
+        <p class="text-sm font-medium flex-1">{{ session('success') }}</p>
+        <button onclick="this.parentElement.remove()" class="text-green-400 hover:text-green-600 ml-2">✕</button>
+    </div>
+    @endif
+    @if(session('error'))
+    <div class="fade-in flex items-center gap-3 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-2xl shadow-sm">
+        <span class="text-xl">⚠️</span>
+        <p class="text-sm font-medium flex-1">{{ session('error') }}</p>
+        <button onclick="this.parentElement.remove()" class="text-red-400 hover:text-red-600 ml-2">✕</button>
+    </div>
+    @endif
+</div>
+<script>setTimeout(()=>{const e=document.getElementById('flash-msg');if(e){e.style.opacity=0;e.style.transition='opacity .4s';setTimeout(()=>e.remove(),400)}},4000);</script>
+@endif
 
-        @yield('content')
-    </main>
+<main class="@yield('main-class','max-w-screen-xl mx-auto px-4 py-6')">
+    @yield('content')
+</main>
 
-    @stack('scripts')
+@stack('scripts')
 </body>
 </html>
