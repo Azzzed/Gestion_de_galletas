@@ -222,6 +222,22 @@
                     <span class="icon icon-sm">receipt_long</span>
                     <span class="hidden sm:inline">Ventas</span>
                 </a>
+
+                <a href="{{ route('admin.deliveries.index') }}"
+                    class="nav-link {{ request()->routeIs('admin.deliveries.*') ? 'active' : '' }}">
+                        <span class="icon icon-sm">local_shipping</span>
+                        <span class="hidden sm:inline">Domicilios</span>
+                    </a>
+                    <a href="{{ route('admin.promo-codes.index') }}"
+                    class="nav-link {{ request()->routeIs('admin.promo-codes.*') ? 'active' : '' }}">
+                        <span class="icon icon-sm">local_offer</span>
+                        <span class="hidden sm:inline">Promos</span>
+                    </a>
+                    <a href="{{ route('admin.stats.index') }}"
+                    class="nav-link {{ request()->routeIs('admin.stats.*') ? 'active' : '' }}">
+                        <span class="icon icon-sm">analytics</span>
+                        <span class="hidden sm:inline">Estadísticas</span>
+                    </a>
             </div>
         </div>
     </div>
