@@ -18,12 +18,14 @@ class Customer extends Model
         'nombre',
         'telefono',
         'direccion',
+        'direcciones',  // ← array JSON de direcciones de domicilio
         'email',
         'activo',
     ];
 
     protected $casts = [
-        'activo' => 'boolean',
+        'activo'      => 'boolean',
+        'direcciones' => 'array',   // ← cast JSON automático
     ];
 
     // ── Relaciones ───────────────────────────────────────────────
@@ -36,6 +38,11 @@ class Customer extends Model
     public function debts(): HasMany
     {
         return $this->hasMany(Debt::class);
+    }
+
+    public function deliveryOrders(): HasMany
+    {
+        return $this->hasMany(DeliveryOrder::class, 'customer_id');
     }
 
     // ── Accessors ────────────────────────────────────────────────
@@ -90,7 +97,7 @@ class Customer extends Model
                 'cookies.id',
                 'cookies.nombre',
                 'cookies.imagen_path',
-                \Illuminate\Support\Facades\DB::raw('SUM(sale_items.cantidad) AS total_comprado')
+                DB::raw('SUM(sale_items.cantidad) AS total_comprado')
             )
             ->groupBy('cookies.id', 'cookies.nombre', 'cookies.imagen_path')
             ->orderByDesc('total_comprado')
