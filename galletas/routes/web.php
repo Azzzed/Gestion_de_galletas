@@ -106,6 +106,27 @@ Route::prefix('admin')->name('admin.')->middleware('role:vendedor')->group(funct
         ->name('sales.anular')
         ->middleware('role:admin');
 
+
+
+
+    // ── Historial de ventas ────────────────────────────── vendedor (solo ver + PDF)
+    Route::get('sales/top-clients',    [SaleHistoryController::class, 'topClientes'])->name('sales.top-clients');
+    Route::get('sales',                [SaleHistoryController::class, 'index'])->name('sales.index');
+    Route::get('sales/{sale}/detalle', [SaleHistoryController::class, 'detalle'])->name('sales.detalle');
+    Route::get('sales/{sale}/pdf',     [SaleHistoryController::class, 'exportarPdf'])->name('sales.pdf');
+    Route::get('sales/{sale}',         [SaleHistoryController::class, 'show'])->name('sales.show');
+
+    // Anular venta: SOLO admin
+    Route::patch('sales/{sale}/anular', [SaleHistoryController::class, 'anular'])
+        ->name('sales.anular')
+        ->middleware('role:admin');
+
+    // ✅ NUEVO: Eliminar venta (soft delete): SOLO admin
+    Route::delete('sales/{sale}', [SaleHistoryController::class, 'destroy'])
+        ->name('sales.destroy')
+        ->middleware('role:admin');
+
+
     // ── Galletas ───────────────────────────────────────── vendedor solo ver
     Route::get('cookies',          [CookieController::class, 'index'])->name('cookies.index');
     Route::get('cookies/{cookie}', [CookieController::class, 'show'])->name('cookies.show');

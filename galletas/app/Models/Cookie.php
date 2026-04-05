@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Builder;
@@ -41,6 +42,12 @@ class Cookie extends Model
         return $this->hasMany(SaleItem::class);
     }
 
+    // ✅ FIX: relación branch que faltaba (usada en reportes de SuperAdmin)
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
     // ── Accessors ────────────────────────────────────────────────
 
     public function getPrecioFormateadoAttribute(): string
@@ -48,7 +55,7 @@ class Cookie extends Model
         return '$' . number_format($this->precio, 0, ',', '.');
     }
 
-    public function getImagenUrlAttribute(): string
+    public function getImagenUrlAttribute(): ?string
     {
         return $this->imagen_path
             ? Storage::url($this->imagen_path)

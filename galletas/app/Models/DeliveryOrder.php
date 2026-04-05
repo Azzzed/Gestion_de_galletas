@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Builder;
 use App\Traits\BranchAware;
+
 class DeliveryOrder extends Model
 {
     use BranchAware;
@@ -35,13 +36,13 @@ class DeliveryOrder extends Model
     ];
 
     protected $casts = [
-        'items'          => 'array',
-        'subtotal'       => 'decimal:2',
-        'discount_amount'=> 'decimal:2',
-        'total'          => 'decimal:2',
-        'delivery_cost'  => 'decimal:2',
-        'paid_amount'    => 'decimal:2',
-        'scheduled_at'   => 'datetime',
+        'items'           => 'array',
+        'subtotal'        => 'decimal:2',
+        'discount_amount' => 'decimal:2',
+        'total'           => 'decimal:2',
+        'delivery_cost'   => 'decimal:2',
+        'paid_amount'     => 'decimal:2',
+        'scheduled_at'    => 'datetime',
     ];
 
     // ── Relaciones ───────────────────────────────────────────────
@@ -49,6 +50,12 @@ class DeliveryOrder extends Model
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    // ✅ FIX: relación branch que faltaba (usada en reportes de SuperAdmin)
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
     }
 
     // ── Accessors ────────────────────────────────────────────────
@@ -145,7 +152,6 @@ class DeliveryOrder extends Model
         return $this->customer?->telefono ?? $this->customer_phone ?? '—';
     }
 
-    // Items enriquecidos con datos de la cookie
     public function getEnrichedItemsAttribute(): array
     {
         return collect($this->items ?? [])->map(function ($item) {

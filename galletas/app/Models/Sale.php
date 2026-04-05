@@ -7,10 +7,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Builder;
+use App\Traits\BranchAware; // ✅ FIX: faltaba este trait
 
 class Sale extends Model
 {
     use SoftDeletes;
+    use BranchAware; // ✅ FIX: sin esto todas las sucursales veían todas las ventas
 
     protected $fillable = [
         'customer_id', 'numero_factura', 'subtotal',
@@ -32,7 +34,9 @@ class Sale extends Model
     {
         static::creating(function (Sale $sale) {
             if (empty($sale->numero_factura)) {
-                $ultimo = static::withTrashed()->max('id') ?? 0;
+                // withoutGlobalScope('branch') para que el max() sea global
+                // y no haya facturas duplicadas entre sucursales
+                $ultimo = static::withTrashed()->withoutGlobalScope('branch')->max('id') ?? 0;
                 $sale->numero_factura = 'CC-' . str_pad($ultimo + 1, 6, '0', STR_PAD_LEFT);
             }
         });
@@ -43,6 +47,11 @@ class Sale extends Model
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
     }
 
     public function items(): HasMany

@@ -1,20 +1,30 @@
 @extends('layouts.app')
 @section('title','Nuevo Cliente')
 @section('content')
-<div class="max-w-xl mx-auto">
-    <div class="flex items-center gap-3 mb-6">
+
+<div class="max-w-2xl mx-auto">
+
+    {{-- Header --}}
+    <div class="flex items-center gap-4 mb-8">
         <a href="{{ route('admin.customers.index') }}"
-           class="p-2 rounded-xl hover:bg-warm-100 text-gray-500">←</a>
+           class="w-10 h-10 rounded-xl border border-cream-300 flex items-center justify-center text-espresso-700/50 hover:text-espresso-900 hover:bg-cream-100 hover:border-brand-300 transition-all">
+            <span class="icon icon-sm">arrow_back</span>
+        </a>
         <div>
-            <h1 class="text-2xl font-bold text-gray-800">Nuevo Cliente</h1>
-            <p class="text-sm text-gray-400">Registra los datos de contacto</p>
+            <h1 class="font-display font-bold text-espresso-900 text-2xl flex items-center gap-2">
+                <span class="icon icon-lg text-brand-500">person_add</span>
+                Nuevo Cliente
+            </h1>
+            <p class="page-subtitle">Registra los datos de contacto</p>
         </div>
     </div>
-    <div class="bg-white rounded-3xl shadow-sm border border-warm-200 p-6">
+
+    <div class="card p-8">
         <form method="POST" action="{{ route('admin.customers.store') }}">
             @csrf
             @include('admin.customers._form')
         </form>
     </div>
+
 </div>
 @endsection

@@ -18,29 +18,16 @@
                 extend: {
                     colors: {
                         brand: {
-                            50:  '#fff8ed',
-                            100: '#ffefd0',
-                            200: '#ffd99e',
-                            300: '#ffbc63',
-                            400: '#ff9427',
-                            500: '#f97316',
-                            600: '#ea6008',
-                            700: '#c24808',
-                            800: '#9a3a10',
-                            900: '#7c3110',
-                            950: '#431606',
+                            50:  '#fff8ed', 100: '#ffefd0', 200: '#ffd99e',
+                            300: '#ffbc63', 400: '#ff9427', 500: '#f97316',
+                            600: '#ea6008', 700: '#c24808', 800: '#9a3a10',
+                            900: '#7c3110', 950: '#431606',
                         },
                         cream: {
-                            50:  '#fdfaf4',
-                            100: '#fbf3e2',
-                            200: '#f5e5c0',
-                            300: '#eecf93',
+                            50: '#fdfaf4', 100: '#fbf3e2',
+                            200: '#f5e5c0', 300: '#eecf93',
                         },
-                        espresso: {
-                            700: '#5c2d0a',
-                            800: '#3b1f0e',
-                            900: '#1a0a00',
-                        }
+                        espresso: { 700: '#5c2d0a', 800: '#3b1f0e', 900: '#1a0a00' },
                     },
                     fontFamily: {
                         display: ['Syne', 'sans-serif'],
@@ -72,7 +59,7 @@
         .icon-xl  { font-size: 32px; }
         .icon-2xl { font-size: 48px; }
 
-        /* Navbar */
+        /* ── Navbar ───────────────────────────────────────────── */
         .navbar {
             background: linear-gradient(135deg, #1a0a00 0%, #3b1f0e 55%, #c24808 100%);
             border-bottom: 1px solid rgba(234,96,8,0.4);
@@ -92,90 +79,124 @@
             box-shadow: inset 0 0 0 1px rgba(249,115,22,0.4);
         }
 
-        /* Cards */
-        .card {
-            background: #fff; border-radius: 16px;
-            border: 1px solid #f5e5c0;
-            box-shadow: 0 1px 3px rgba(58,31,14,0.06);
-            transition: all 0.2s;
+        /* Botón de logout en navbar */
+        .btn-logout {
+            display: flex; align-items: center; gap: 6px;
+            padding: 7px 13px; border-radius: 10px;
+            font-size: 13px; font-weight: 600;
+            color: rgba(255, 180, 150, 0.85);
+            background: rgba(234, 96, 8, 0.12);
+            border: 1px solid rgba(234, 96, 8, 0.25);
+            cursor: pointer;
+            transition: all 0.18s ease;
         }
-        .card:hover { box-shadow: 0 6px 20px rgba(234,96,8,0.1); border-color: #ffd99e; }
+        .btn-logout:hover {
+            color: #fff;
+            background: rgba(220, 60, 10, 0.35);
+            border-color: rgba(234, 96, 8, 0.5);
+        }
 
-        /* Buttons */
+        /* ── Cards ────────────────────────────────────────────── */
+        .card {
+            background: #fff;
+            border-radius: 20px;
+            border: 1px solid #f5e5c0;
+            box-shadow: 0 1px 4px rgba(26,10,0,0.06);
+        }
+
+        /* ── Buttons ──────────────────────────────────────────── */
         .btn-primary {
             display: inline-flex; align-items: center; gap: 6px;
-            padding: 9px 18px; border-radius: 10px;
-            background: linear-gradient(135deg, #ea6008, #f97316);
-            color: #fff; font-weight: 700; font-size: 13px;
-            box-shadow: 0 2px 12px rgba(234,96,8,0.3);
-            transition: all 0.2s; cursor: pointer;
+            padding: 10px 20px; border-radius: 12px;
+            font-size: 14px; font-weight: 700;
+            background: linear-gradient(135deg, #ea6008, #c24808);
+            color: #fff;
+            border: none; cursor: pointer;
+            transition: all 0.18s ease;
+            box-shadow: 0 2px 8px rgba(234,96,8,0.25);
         }
-        .btn-primary:hover { background: linear-gradient(135deg, #c24808, #ea6008); transform: translateY(-1px); box-shadow: 0 4px 18px rgba(234,96,8,0.4); }
-        .btn-primary:active { transform: scale(0.97); }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+
         .btn-ghost {
             display: inline-flex; align-items: center; gap: 6px;
-            padding: 8px 16px; border-radius: 10px;
-            border: 1px solid #eecf93; background: transparent;
-            color: #9a3a10; font-weight: 600; font-size: 13px;
-            transition: all 0.2s;
+            padding: 10px 18px; border-radius: 12px;
+            font-size: 14px; font-weight: 600;
+            color: #5c2d0a;
+            background: transparent;
+            border: 1.5px solid #eecf93;
+            cursor: pointer;
+            transition: all 0.18s ease;
         }
-        .btn-ghost:hover { background: #fff8ed; border-color: #f97316; }
-        .btn-danger {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 8px 16px; border-radius: 10px;
-            border: 1px solid #fecaca; background: #fef2f2;
-            color: #dc2626; font-weight: 600; font-size: 13px;
-            transition: all 0.2s;
-        }
-        .btn-danger:hover { background: #fee2e2; border-color: #f87171; }
+        .btn-ghost:hover { background: #fbf3e2; border-color: #ea6008; color: #ea6008; }
 
-        /* Badges */
-        .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; letter-spacing: 0.02em; }
+        /* ── Table ────────────────────────────────────────────── */
+        .tbl-head th {
+            padding: 12px 16px;
+            background: #fbf3e2;
+            font-size: 11px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.08em;
+            color: #5c2d0a;
+            text-align: left;
+            border-bottom: 1px solid #f5e5c0;
+        }
+        .tbl-row td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #f5e5c0;
+            font-size: 13px; color: #3b1f0e;
+        }
+        .tbl-row:last-child td { border-bottom: none; }
+        .tbl-row:hover td { background: #fdfaf4; }
+
+        /* ── Badges ───────────────────────────────────────────── */
+        .badge {
+            display: inline-flex; align-items: center;
+            padding: 3px 10px; border-radius: 20px;
+            font-size: 11px; font-weight: 700;
+        }
         .badge-green  { background: #dcfce7; color: #166534; }
         .badge-red    { background: #fee2e2; color: #991b1b; }
-        .badge-amber  { background: #fef9c3; color: #854d0e; }
-        .badge-orange { background: #fff7ed; color: #9a3510; border: 1px solid #fed7aa; }
+        .badge-amber  { background: #fef3c7; color: #92400e; }
         .badge-gray   { background: #f3f4f6; color: #374151; }
+        .badge-blue   { background: #dbeafe; color: #1e40af; }
 
-        /* Table */
-        .tbl-head th {
-            background: #fbf3e2; padding: 11px 16px;
-            text-align: left; font-size: 10.5px; font-weight: 700;
-            color: #9a3a10; text-transform: uppercase; letter-spacing: 0.07em;
-            white-space: nowrap;
-        }
-        .tbl-row td { padding: 13px 16px; font-size: 13.5px; border-bottom: 1px solid #fbf3e2; color: #3b1f0e; }
-        .tbl-row:hover td { background: #fdfaf4; }
-        .tbl-row:last-child td { border-bottom: none; }
-
-        /* Input */
+        /* ── Form fields ──────────────────────────────────────── */
         .field {
-            width: 100%; padding: 10px 14px; border-radius: 10px;
-            border: 1px solid #eecf93; background: #fdfaf4;
-            font-size: 13.5px; color: #3b1f0e;
-            outline: none; transition: all 0.2s;
-            font-family: 'Plus Jakarta Sans', sans-serif;
+            width: 100%;
+            padding: 9px 12px;
+            border-radius: 10px;
+            border: 1.5px solid #eecf93;
+            background: #fff;
+            font-size: 13px; color: #1a0a00;
+            transition: border-color 0.15s;
+            outline: none;
         }
-        .field:focus { border-color: #f97316; background: #fff; box-shadow: 0 0 0 3px rgba(249,115,22,0.12); }
-        .field::placeholder { color: #c9a37c; }
+        .field:focus { border-color: #ea6008; box-shadow: 0 0 0 3px rgba(234,96,8,0.1); }
 
-        /* Select */
-        select.field { appearance: none; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='%239a3a10'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px; }
+        /* ── Fade animations ──────────────────────────────────── */
+        .fade-in { animation: fadeIn 0.25s ease; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Animations */
-        .fade-in  { animation: fadeIn .22s ease-out; }
-        .slide-up { animation: slideUp .28s cubic-bezier(.34,1.56,.64,1); }
-        @keyframes fadeIn  { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes slideUp { from{opacity:0;transform:scale(.95) translateY(-8px)} to{opacity:1;transform:scale(1) translateY(0)} }
-
-        /* Scrollbar */
+        /* ── Scrollbar ────────────────────────────────────────── */
         ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-track { background: #fbf3e2; }
         ::-webkit-scrollbar-thumb { background: #f97316; border-radius: 4px; }
 
-        /* Page heading */
+        /* ── Page heading ─────────────────────────────────────── */
         .page-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 22px; color: #1a0a00; }
         .page-subtitle { font-size: 13px; color: #9a6a3a; margin-top: 2px; }
+
+        /* ── Role badge en navbar ─────────────────────────────── */
+        .role-badge {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+        .role-badge-superadmin { background: rgba(124,58,237,0.25); color: #c4b5fd; border: 1px solid rgba(124,58,237,0.35); }
+        .role-badge-admin      { background: rgba(234,96,8,0.25);   color: #fed7aa; border: 1px solid rgba(234,96,8,0.35); }
+        .role-badge-vendedor   { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.15); }
     </style>
     @stack('styles')
 </head>
@@ -187,7 +208,7 @@
     <div class="max-w-screen-xl mx-auto px-4">
         <div class="flex items-center justify-between h-14">
 
-            {{-- Brand --}}
+            {{-- Brand: logo + nombre + rol --}}
             <a href="{{ route('pos.index') }}" class="flex items-center gap-3 group">
                 <div class="w-9 h-9 rounded-xl overflow-hidden ring-2 ring-white/20 shadow-lg flex-shrink-0">
                     <img src="/images/capy-crunch-logo.jpg" alt="Capy Crunch"
@@ -195,12 +216,27 @@
                          onerror="this.style.display='none';this.parentElement.style.background='#ea6008';this.parentElement.innerHTML+='<span class=\'icon\' style=\'color:#fff;font-size:18px;display:flex;align-items:center;justify-content:center;width:100%;height:100%\'>cookie</span>'">
                 </div>
                 <div class="hidden sm:block leading-tight">
-                    <p class="text-white font-display font-bold text-[15px] tracking-tight group-hover:text-brand-300 transition-colors">Capy Crunch</p>
-                    <p class="text-white/40 text-[10px] tracking-widest uppercase">Gestión</p>
+                    <p class="text-white font-display font-bold text-[15px] tracking-tight group-hover:text-brand-300 transition-colors">
+                        Capy Crunch
+                    </p>
+                    {{-- ✅ FIX 4: rol del usuario actual --}}
+                    @auth
+                        @if(auth()->user()->isSuperAdmin())
+                            <span class="role-badge role-badge-superadmin">👑 Super Admin</span>
+                        @elseif(auth()->user()->isAdmin())
+                            <span class="role-badge role-badge-admin">
+                                🏪 Admin · {{ auth()->user()->branch?->nombre ?? 'Sin sucursal' }}
+                            </span>
+                        @else
+                            <span class="role-badge role-badge-vendedor">
+                                🛒 Vendedor · {{ auth()->user()->branch?->nombre ?? 'Sin sucursal' }}
+                            </span>
+                        @endif
+                    @endauth
                 </div>
             </a>
 
-            {{-- Links --}}
+            {{-- Nav links --}}
             <div class="flex items-center gap-0.5">
                 <a href="{{ route('pos.index') }}"
                    class="nav-link {{ request()->routeIs('pos.*') ? 'active' : '' }}">
@@ -222,46 +258,57 @@
                     <span class="icon icon-sm">receipt_long</span>
                     <span class="hidden sm:inline">Ventas</span>
                 </a>
-
                 <a href="{{ route('admin.deliveries.index') }}"
-                    class="nav-link {{ request()->routeIs('admin.deliveries.*') ? 'active' : '' }}">
-                        <span class="icon icon-sm">local_shipping</span>
-                        <span class="hidden sm:inline">Domicilios</span>
-                    </a>
-                    <a href="{{ route('admin.promo-codes.index') }}"
-                    class="nav-link {{ request()->routeIs('admin.promo-codes.*') ? 'active' : '' }}">
-                        <span class="icon icon-sm">local_offer</span>
-                        <span class="hidden sm:inline">Promos</span>
-                    </a>
-                    <a href="{{ route('admin.stats.index') }}"
-                    class="nav-link {{ request()->routeIs('admin.stats.*') ? 'active' : '' }}">
-                        <span class="icon icon-sm">analytics</span>
-                        <span class="hidden sm:inline">Estadísticas</span>
-                    </a>
+                   class="nav-link {{ request()->routeIs('admin.deliveries.*') ? 'active' : '' }}">
+                    <span class="icon icon-sm">local_shipping</span>
+                    <span class="hidden sm:inline">Domicilios</span>
+                </a>
+                <a href="{{ route('admin.promo-codes.index') }}"
+                   class="nav-link {{ request()->routeIs('admin.promo-codes.*') ? 'active' : '' }}">
+                    <span class="icon icon-sm">local_offer</span>
+                    <span class="hidden sm:inline">Promos</span>
+                </a>
+                <a href="{{ route('admin.stats.index') }}"
+                   class="nav-link {{ request()->routeIs('admin.stats.*') ? 'active' : '' }}">
+                    <span class="icon icon-sm">analytics</span>
+                    <span class="hidden sm:inline">Estadísticas</span>
+                </a>
 
-                    <form method="POST" action="{{ route('logout') }}">@csrf
-    <button type="submit">Salir</button>
-</form>
+                {{-- ✅ FIX: botón cerrar sesión con estilo --}}
+                <form method="POST" action="{{ route('logout') }}" class="ml-2">
+                    @csrf
+                    <button type="submit" class="btn-logout">
+                        <span class="icon icon-sm">logout</span>
+                        <span class="hidden sm:inline">Salir</span>
+                    </button>
+                </form>
             </div>
         </div>
     </div>
 </nav>
 
 {{-- ══ FLASH ════════════════════════════════════════════════════ --}}
-@if(session('success') || session('error'))
+@if(session('success') || session('error') || session('info'))
 <div class="max-w-screen-xl mx-auto px-4 pt-4" id="flash-msg">
     @if(session('success'))
-    <div class="fade-in flex items-center gap-3 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-2xl shadow-sm">
+    <div class="fade-in flex items-center gap-3 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-2xl shadow-sm mb-2">
         <span class="icon icon-fill text-green-600">check_circle</span>
         <p class="text-sm font-semibold flex-1">{{ session('success') }}</p>
         <button onclick="this.parentElement.remove()"><span class="icon icon-sm text-green-400 hover:text-green-700">close</span></button>
     </div>
     @endif
     @if(session('error'))
-    <div class="fade-in flex items-center gap-3 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-2xl shadow-sm">
+    <div class="fade-in flex items-center gap-3 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-2xl shadow-sm mb-2">
         <span class="icon icon-fill text-red-500">error</span>
         <p class="text-sm font-semibold flex-1">{{ session('error') }}</p>
         <button onclick="this.parentElement.remove()"><span class="icon icon-sm text-red-400 hover:text-red-600">close</span></button>
+    </div>
+    @endif
+    @if(session('info'))
+    <div class="fade-in flex items-center gap-3 bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-2xl shadow-sm mb-2">
+        <span class="icon icon-fill text-blue-500">info</span>
+        <p class="text-sm font-semibold flex-1">{{ session('info') }}</p>
+        <button onclick="this.parentElement.remove()"><span class="icon icon-sm text-blue-400 hover:text-blue-600">close</span></button>
     </div>
     @endif
 </div>

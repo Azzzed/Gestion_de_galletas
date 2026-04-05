@@ -17,7 +17,7 @@
 
     {{-- KPIs --}}
     <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-        <div class="rounded-2xl p-5 shadow-sm bg-gradient-to-br from-espresso-900 to-darkBrown">
+        <div class="rounded-2xl p-5 shadow-sm" style="background:linear-gradient(135deg,#1a0a00,#3b1f0e)">
             <span class="icon text-white/60 block mb-2">receipt_long</span>
             <p class="font-display font-bold text-white text-2xl">{{ number_format($kpis->total_ventas ?? 0) }}</p>
             <p class="text-white/60 text-xs font-bold uppercase tracking-wide mt-1">Ventas en período</p>
@@ -54,7 +54,6 @@
                     <option value="">Todos</option>
                     <option value="completada" @selected(request('estado')==='completada')>Completada</option>
                     <option value="anulada"    @selected(request('estado')==='anulada')>Anulada</option>
-                    {{-- Nota: filtrar por "entregado" oculta domicilios (filtro solo aplica a ventas POS) --}}
                 </select>
             </div>
             <div>
@@ -77,8 +76,7 @@
             </div>
             <div>
                 <label class="text-[10px] text-espresso-700/50 uppercase font-bold block mb-1">Cliente</label>
-                <input type="text" name="cliente" value="{{ request('cliente') }}" placeholder="Nombre o tel."
-                       class="field text-sm py-2">
+                <input type="text" name="cliente" value="{{ request('cliente') }}" placeholder="Nombre o tel." class="field text-sm py-2">
             </div>
             <div>
                 <label class="text-[10px] text-espresso-700/50 uppercase font-bold block mb-1">Monto mín.</label>
@@ -166,50 +164,50 @@
                                         <div class="w-7 h-7 rounded-full {{ $esEntrega ? 'bg-blue-100' : 'bg-brand-100' }} flex items-center justify-center {{ $esEntrega ? 'text-blue-700' : 'text-brand-700' }} font-bold text-xs flex-shrink-0">
                                             {{ strtoupper(substr($venta->customer->nombre ?? '?', 0, 1)) }}
                                         </div>
-                                        <span class="text-sm font-medium truncate max-w-[120px]">
-                                            {{ $venta->customer->nombre ?? '—' }}
-                                        </span>
+                                        <div>
+                                            <p class="text-sm font-semibold text-espresso-900">{{ $venta->customer->nombre ?? '—' }}</p>
+                                            @if($venta->customer?->telefono)
+                                            <p class="text-[11px] text-espresso-700/40">{{ $venta->customer->telefono }}</p>
+                                            @endif
+                                        </div>
                                     </div>
                                 </td>
 
                                 {{-- Fecha --}}
                                 <td>
                                     <p class="text-sm font-medium">{{ $venta->created_at->format('d/m/Y') }}</p>
-                                    <p class="text-xs text-espresso-700/40">{{ $venta->created_at->format('H:i') }}</p>
+                                    <p class="text-[11px] text-espresso-700/40">{{ $venta->created_at->format('H:i') }}</p>
                                 </td>
 
                                 {{-- Items --}}
                                 <td class="text-center">
-                                    <span class="inline-flex items-center justify-center w-7 h-7 rounded-full {{ $esEntrega ? 'bg-blue-100 text-blue-700' : 'bg-brand-100 text-brand-700' }} text-xs font-bold">
-                                        {{ $venta->items_count }}
+                                    <span class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-brand-50 text-brand-700 font-bold text-sm">
+                                        {{ $venta->items_count ?? 0 }}
                                     </span>
                                 </td>
 
-                                {{-- Método de pago --}}
+                                {{-- Pago --}}
                                 <td>
-                                    <div class="flex items-center gap-1 text-sm">
-                                        <span class="icon icon-sm text-brand-400">{{ $payIcons[$venta->metodo_pago] ?? 'payment' }}</span>
-                                        <span class="capitalize text-xs">{{ $venta->metodo_pago }}</span>
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="icon icon-sm text-espresso-700/40">{{ $payIcons[$venta->metodo_pago] ?? 'payments' }}</span>
+                                        <span class="text-sm capitalize">{{ $venta->metodo_pago }}</span>
                                     </div>
+                                    @if($venta->tiene_deuda)
+                                    <span class="text-[10px] font-bold text-red-500 mt-0.5 block">
+                                        ⚠ {{ ($venta->_type ?? 'sale') === 'delivery' ? 'Pend.' : 'Deuda' }}
+                                    </span>
+                                    @endif
                                 </td>
 
                                 {{-- Total --}}
                                 <td>
-                                    <p class="font-bold">{{ $venta->total_formateado }}</p>
-                                    @if($venta->tiene_deuda)
-                                    <span class="badge badge-red text-[10px]">
-                                        <span class="icon icon-sm">credit_card_off</span>
-                                        {{ $esEntrega ? 'Pend.' : 'Deuda' }}
-                                    </span>
-                                    @endif
+                                    <span class="font-display font-bold text-espresso-900">{{ $venta->total_formateado }}</span>
                                 </td>
 
                                 {{-- Estado --}}
                                 <td>
                                     @if($esEntrega)
-                                    <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
-                                        ✅ Entregado
-                                    </span>
+                                    <span class="badge badge-blue">✅ Entregado</span>
                                     @else
                                     @php $stMap = ['completada'=>'badge-green','anulada'=>'badge-red','pendiente'=>'badge-amber']; @endphp
                                     <span class="badge {{ $stMap[$venta->estado] ?? 'badge-gray' }}">{{ ucfirst($venta->estado) }}</span>
@@ -218,16 +216,16 @@
 
                                 {{-- Acciones --}}
                                 <td class="text-right">
-                                    <div class="flex items-center gap-1 justify-end">
+                                    <div class="flex items-center gap-1 justify-end pr-2">
                                         @if($esEntrega)
-                                        {{-- Domicilio → ir al detalle del kanban --}}
+                                        {{-- Domicilio → ir al kanban --}}
                                         <a href="{{ route('admin.deliveries.show', $venta->id) }}"
                                            title="Ver domicilio"
                                            class="w-8 h-8 rounded-lg flex items-center justify-center text-espresso-700/40 hover:text-blue-600 hover:bg-blue-50 transition-colors">
                                             <span class="icon icon-sm">local_shipping</span>
                                         </a>
                                         @else
-                                        {{-- Venta POS → modal detalle + PDF + anular --}}
+                                        {{-- Venta POS → modal + PDF + anular + eliminar --}}
                                         <button @click="abrirDetalle({{ $venta->id }})"
                                                 title="Ver detalle"
                                                 class="w-8 h-8 rounded-lg flex items-center justify-center text-espresso-700/40 hover:text-brand-600 hover:bg-brand-50 transition-colors">
@@ -238,12 +236,23 @@
                                            class="w-8 h-8 rounded-lg flex items-center justify-center text-espresso-700/40 hover:text-red-500 hover:bg-red-50 transition-colors">
                                             <span class="icon icon-sm">picture_as_pdf</span>
                                         </a>
-                                        @if($venta->estado === 'completada')
-                                        <button @click="anular({{ $venta->id }})"
-                                                title="Anular venta"
-                                                class="w-8 h-8 rounded-lg flex items-center justify-center text-espresso-700/40 hover:text-red-500 hover:bg-red-50 transition-colors">
-                                            <span class="icon icon-sm">block</span>
-                                        </button>
+
+                                        @if(auth()->user()->isAdmin())
+                                            {{-- Anular: solo si está completada --}}
+                                            @if($venta->estado === 'completada')
+                                            <button @click="anular({{ $venta->id }})"
+                                                    title="Anular venta"
+                                                    class="w-8 h-8 rounded-lg flex items-center justify-center text-espresso-700/40 hover:text-amber-600 hover:bg-amber-50 transition-colors">
+                                                <span class="icon icon-sm">block</span>
+                                            </button>
+                                            @endif
+
+                                            {{-- ✅ FIX 3: Eliminar (soft delete) — solo admin, una sola confirmación --}}
+                                            <button @click="eliminar({{ $venta->id }}, '{{ $venta->numero_factura }}')"
+                                                    title="Eliminar venta"
+                                                    class="w-8 h-8 rounded-lg flex items-center justify-center text-espresso-700/40 hover:text-red-600 hover:bg-red-50 transition-colors">
+                                                <span class="icon icon-sm">delete</span>
+                                            </button>
                                         @endif
                                         @endif
                                     </div>
@@ -300,7 +309,7 @@
         </div>
     </div>
 
-    {{-- Modal detalle (solo para ventas POS) --}}
+    {{-- Modal detalle venta POS --}}
     <div x-show="modalAbierto" x-cloak x-transition
          @click.self="cerrarModal()"
          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-espresso-900/50 backdrop-blur-sm">
@@ -335,7 +344,10 @@
                             <div class="space-y-1.5">
                                 <template x-for="item in venta.items" :key="item.nombre">
                                     <div class="flex items-center justify-between bg-cream-50 rounded-xl px-4 py-2.5 border border-cream-200">
-                                        <span class="text-sm font-bold" x-text="item.nombre"></span>
+                                        <div>
+                                            <span class="text-sm font-bold" x-text="item.nombre"></span>
+                                            <span class="text-xs text-espresso-700/50 ml-2" x-text="'x' + item.cantidad"></span>
+                                        </div>
                                         <span class="text-sm font-bold" x-text="'$'+Number(item.subtotal).toLocaleString('es-CO')"></span>
                                     </div>
                                 </template>
@@ -358,10 +370,6 @@
     </div>
 
 </div>
-
-@push('styles')
-<style>@keyframes spin { to { transform: rotate(360deg); } }</style>
-@endpush
 
 @push('scripts')
 <script>
@@ -386,7 +394,7 @@ function salesTable() {
         },
 
         async anular(id) {
-            if (!confirm('¿Estás seguro de que deseas anular esta venta?')) return;
+            if (!confirm('¿Anular esta venta?')) return;
             const motivo = prompt('Motivo de anulación (opcional):') ?? '';
             const res = await fetch(`/admin/sales/${id}/anular`, {
                 method:  'PATCH',
@@ -398,6 +406,22 @@ function salesTable() {
             });
             const data = await res.json();
             if (data.success) window.location.reload();
+            else alert(data.mensaje ?? 'Error al anular.');
+        },
+
+        // ✅ FIX 3: eliminar con una sola confirmación (soft delete, solo admin)
+        async eliminar(id, factura) {
+            if (!confirm(`¿Eliminar la venta ${factura}? El stock será restaurado.`)) return;
+            const res = await fetch(`/admin/sales/${id}`, {
+                method:  'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                },
+            });
+            const data = await res.json();
+            if (data.success) window.location.reload();
+            else alert(data.mensaje ?? 'Error al eliminar.');
         },
     };
 }

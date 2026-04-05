@@ -777,16 +777,43 @@ function posApp() {
         },
 
         // ── Carrito ────────────────────────────────────────────
-        agregar(g) {
-            const i = this.carrito.findIndex(x => x.id === g.id);
-            i >= 0 ? this.carrito[i].cantidad++ : this.carrito.push({ ...g, cantidad: 1 });
-        },
-        inc(i) { this.carrito[i].cantidad++; },
-        dec(i) {
-            this.carrito[i].cantidad > 1
-                ? this.carrito[i].cantidad--
-                : this.carrito.splice(i, 1);
-        },
+
+agregar(g) {
+    const i = this.carrito.findIndex(x => x.id === g.id);
+    const cantidadEnCarrito = i >= 0 ? this.carrito[i].cantidad : 0;
+
+    if (cantidadEnCarrito >= g.stock) {
+        alert(`Solo hay ${g.stock} unidades de "${g.nombre}" disponibles.`);
+        return;
+    }
+
+    if (i >= 0) {
+        this.carrito[i].cantidad++;
+    } else {
+        this.carrito.push({ ...g, cantidad: 1 });
+    }
+    this.recalcular();
+},
+
+inc(i) {
+    const item = this.carrito[i];                                    // ← sacar el item por índice
+    const galleta = this.todasLasGalletas.find(g => g.id === item.id);
+    const stockMax = galleta ? galleta.stock : 999;
+    if (item.cantidad >= stockMax) {
+        alert(`Solo hay ${stockMax} unidades de "${item.nombre}" disponibles.`);
+        return;
+    }
+    this.carrito[i].cantidad++;
+    this.recalcular();
+},
+
+dec(i) {
+    this.carrito[i].cantidad > 1
+        ? this.carrito[i].cantidad--
+        : this.carrito.splice(i, 1);
+    this.recalcular();             // ← faltaba
+},
+
         limpiar() {
             this.carrito      = [];
             this.descuento    = 0;

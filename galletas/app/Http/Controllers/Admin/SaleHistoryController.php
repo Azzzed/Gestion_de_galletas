@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Sale;
+use App\Models\Cookie;
 use App\Models\DeliveryOrder;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -48,54 +49,42 @@ class SaleHistoryController extends Controller
         $salesRows = $salesQuery->get()->map(fn ($s) => $this->normalizeSale($s));
 
         // ── 2. Domicilios ENTREGADOS ──────────────────────────────
-        // Solo se incluyen si NO hay filtro de estado='anulada' o cookie_id
-        // (esos filtros no aplican a domicilios)
-        $incluirDomicilios = ! $request->filled('estado')   // filtro de estado es solo para ventas
-                          && ! $request->filled('cookie_id') // domicilios no tienen sale_items
-                          && ! $request->filled('tiene_deuda');
+        $incluirDomicilios = ! $request->filled('estado')
+                          && ! $request->filled('cookie_id')
+                          && ! $request->filled('monto_min')
+                          && ! $request->filled('monto_max');
 
         $delivRows = collect();
-
         if ($incluirDomicilios) {
             $delivQuery = DeliveryOrder::with('customer')->where('status', 'delivered');
-
-            if ($request->filled('desde'))       $delivQuery->whereDate('created_at', '>=', $request->desde);
-            if ($request->filled('hasta'))       $delivQuery->whereDate('created_at', '<=', $request->hasta);
-            if ($request->filled('monto_min'))   $delivQuery->where('total', '>=', $request->monto_min);
-            if ($request->filled('monto_max'))   $delivQuery->where('total', '<=', $request->monto_max);
-
+            if ($request->filled('desde'))     $delivQuery->whereDate('created_at', '>=', $request->desde);
+            if ($request->filled('hasta'))     $delivQuery->whereDate('created_at', '<=', $request->hasta);
             if ($request->filled('cliente')) {
                 $q = $request->cliente;
-                $delivQuery->where(fn ($sub) =>
-                    $sub->where('customer_name', 'ilike', "%{$q}%")
-                        ->orWhere('customer_phone', 'ilike', "%{$q}%")
-                        ->orWhereHas('customer', fn ($r) =>
-                            $r->where('nombre', 'ilike', "%{$q}%")
-                              ->orWhere('telefono', 'ilike', "%{$q}%")
-                        )
+                $delivQuery->where(fn ($s) =>
+                    $s->where('customer_name', 'ilike', "%{$q}%")
+                      ->orWhere('customer_phone', 'ilike', "%{$q}%")
                 );
             }
-
-            // Filtro por método de pago: mapear contraentrega/transferencia
             if ($request->filled('metodo_pago')) {
-                $map = ['efectivo' => 'cash_on_delivery', 'transferencia' => 'transfer'];
-                $raw = $map[$request->metodo_pago] ?? null;
+                $raw = match($request->metodo_pago) {
+                    'transferencia' => 'transfer',
+                    'efectivo'      => 'cash_on_delivery',
+                    default         => null,
+                };
                 if ($raw) $delivQuery->where('payment_method', $raw);
-                else      $delivRows = collect(); // método no existe en domicilios → 0 resultados
+                else      $delivRows = collect();
             }
-
             if (! $delivRows->isEmpty() || ! $request->filled('metodo_pago') || isset($raw)) {
                 $delivRows = $delivQuery->get()->map(fn ($d) => $this->normalizeDelivery($d));
             }
         }
 
-        // ── 3. Merge, ordenar por fecha, paginar ──────────────────
-        $orderDir  = $request->get('order_dir', 'desc');
-        $orderBy   = $request->get('order_by', 'created_at');
+        // ── 3. Merge, ordenar y paginar ───────────────────────────
+        $orderDir = $request->get('order_dir', 'desc');
+        $orderBy  = $request->get('order_by', 'created_at');
 
         $merged = $salesRows->concat($delivRows);
-
-        // Ordenar por la fecha (total también soportado)
         $merged = match (true) {
             $orderBy === 'total' && $orderDir === 'asc'  => $merged->sortBy('_total'),
             $orderBy === 'total' && $orderDir === 'desc' => $merged->sortByDesc('_total'),
@@ -113,7 +102,7 @@ class SaleHistoryController extends Controller
             'query' => $request->query(),
         ]);
 
-        // ── 4. KPIs (ventas POS del período) ─────────────────────
+        // ── 4. KPIs del período ───────────────────────────────────
         $kpis = Sale::completadas()
             ->when($request->filled('desde'), fn ($q) => $q->whereDate('created_at', '>=', $request->desde))
             ->when($request->filled('hasta'), fn ($q) => $q->whereDate('created_at', '<=', $request->hasta))
@@ -132,12 +121,14 @@ class SaleHistoryController extends Controller
             ->limit(5)
             ->get();
 
+        // ── 6. Lista de galletas para filtro ─────────────────────
         $cookies = \App\Models\Cookie::activos()->orderBy('nombre')->get(['id', 'nombre']);
 
         return view('admin.sales.index', compact('ventas', 'kpis', 'topClientes', 'cookies'));
     }
 
-    // ── Normalizar una Sale a fila unificada ──────────────────────
+    // ── Normalización ─────────────────────────────────────────────
+
     private function normalizeSale(Sale $s): object
     {
         return (object) [
@@ -156,24 +147,17 @@ class SaleHistoryController extends Controller
         ];
     }
 
-    // ── Normalizar un DeliveryOrder a fila unificada ──────────────
     private function normalizeDelivery(DeliveryOrder $d): object
     {
-        // Cliente: registrado o anónimo
-        $customer = $d->customer
-            ?? (object) [
-                'nombre'   => $d->customer_name ?? '— Sin nombre —',
-                'telefono' => $d->customer_phone ?? null,
-            ];
-
-        // Método de pago legible
+        $customer = $d->customer ?? (object) [
+            'nombre'   => $d->customer_name ?? '— Sin nombre —',
+            'telefono' => $d->customer_phone ?? null,
+        ];
         $metodo = match ($d->payment_method) {
             'cash_on_delivery' => 'contraentrega',
             'transfer'         => 'transferencia',
             default            => $d->payment_method,
         };
-
-        // Estado del pago → mostrar como "deuda" si está pendiente
         $tienePendiente = in_array($d->payment_status, ['pending', 'partial']);
 
         return (object) [
@@ -193,7 +177,7 @@ class SaleHistoryController extends Controller
     }
 
     // ════════════════════════════════════════════════════════════
-    // SHOW / DETALLE / PDF / ANULAR  (solo aplican a Sales)
+    // SHOW / DETALLE / PDF / ANULAR / DESTROY
     // ════════════════════════════════════════════════════════════
 
     public function show(Sale $sale): View
@@ -232,7 +216,6 @@ class SaleHistoryController extends Controller
     public function exportarPdf(Sale $sale)
     {
         $sale->load(['customer', 'items.cookie']);
-
         $logoPath   = public_path('images/capy-crunch-logo.jpg');
         $logoBase64 = file_exists($logoPath)
             ? 'data:image/jpeg;base64,' . base64_encode(file_get_contents($logoPath))
@@ -250,6 +233,25 @@ class SaleHistoryController extends Controller
         $request->validate(['motivo' => 'nullable|string|max:255']);
         $sale->anular($request->motivo ?? 'Anulada desde el historial');
         return response()->json(['success' => true, 'mensaje' => 'Venta anulada correctamente.']);
+    }
+
+    /**
+     * ✅ FIX 3: Eliminar venta (soft delete) — solo admin.
+     * Restaura el stock de cada item antes de eliminar.
+     * Bloqueado para vendedores vía middleware en la ruta.
+     */
+    public function destroy(Sale $sale): JsonResponse
+    {
+        // Restaurar stock de cada galleta
+        foreach ($sale->items as $item) {
+            Cookie::withoutGlobalScopes()
+                ->where('id', $item->cookie_id)
+                ->increment('stock', $item->cantidad);
+        }
+
+        $sale->delete(); // soft delete — queda en la BD con deleted_at
+
+        return response()->json(['success' => true, 'mensaje' => 'Venta eliminada correctamente.']);
     }
 
     // ── API: Top clientes ─────────────────────────────────────────
