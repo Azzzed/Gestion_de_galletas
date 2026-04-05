@@ -5,9 +5,10 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
-
+use App\Traits\BranchAware;
 class PromoCode extends Model
 {
+    use BranchAware;
     protected $fillable = [
         'code',
         'description',

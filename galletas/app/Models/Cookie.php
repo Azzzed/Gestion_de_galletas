@@ -7,10 +7,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Storage;
+use App\Traits\BranchAware;
 
 class Cookie extends Model
 {
     use SoftDeletes;
+    use BranchAware;
 
     protected $fillable = [
         'nombre',

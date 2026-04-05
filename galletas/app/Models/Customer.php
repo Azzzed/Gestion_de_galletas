@@ -7,9 +7,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use App\Traits\BranchAware;
 
 class Customer extends Model
 {
+    use BranchAware;
     use SoftDeletes;
 
     public const MOSTRADOR_ID = 1;

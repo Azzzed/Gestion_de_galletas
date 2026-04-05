@@ -14,7 +14,9 @@ class CustomerController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = Customer::reales()->withCount('sales');
+        // ── withCount incluye tanto ventas POS como domicilios ──
+        $query = Customer::reales()
+            ->withCount(['sales', 'deliveryOrders']);
 
         if ($request->filled('buscar')) {
             $query->buscar($request->buscar);
@@ -51,18 +53,49 @@ class CustomerController extends Controller
 
     public function show(Customer $customer): View
     {
+        // ── Ventas POS ───────────────────────────────────────────
         $ventas = $customer->sales()
             ->with('items.cookie')
             ->latest()
             ->paginate(8);
 
-        $deudas       = $customer->debts()->with('sale')->pendientes()->latest()->get();
-        $saldoTotal   = $customer->saldo_pendiente;
-        $frecuentes   = $customer->ventasFrecuentes(5);
-        $totalGastado = $customer->sales()->completadas()->sum('total');
+        // ── Domicilios (incluye todos los estados) ───────────────
+        $domicilios = $customer->deliveryOrders()
+            ->latest()
+            ->paginate(8, ['*'], 'dom_page');
+
+        // ── Totales combinados (POS + Domicilios) ────────────────
+        $totalVentasPOS  = $customer->sales()->completadas()->count();
+        $totalDom        = $customer->deliveryOrders()->whereNotIn('status', ['cancelled'])->count();
+        $totalCompras    = $totalVentasPOS + $totalDom; // ← domicilios cuentan como compra
+
+        $totalGastadoPOS  = (float) $customer->sales()->completadas()->sum('total');
+        $ingresosDom      = (float) $customer->deliveryOrders()
+            ->whereNotIn('status', ['cancelled'])
+            ->where(fn ($q) => $q->whereIn('payment_status', ['paid', 'partial']))
+            ->sum('paid_amount');
+        $totalGastado     = $totalGastadoPOS + $ingresosDom; // ← total real del cliente
+
+        // ── Deudas ───────────────────────────────────────────────
+        $deudas     = $customer->debts()->with('sale')->pendientes()->latest()->get();
+        $saldoTotal = $customer->saldo_pendiente;
+
+        // ── Galleta favorita ─────────────────────────────────────
+        $frecuentes = $customer->ventasFrecuentes(5);
 
         return view('admin.customers.show', compact(
-            'customer', 'ventas', 'deudas', 'saldoTotal', 'frecuentes', 'totalGastado'
+            'customer',
+            'ventas',
+            'domicilios',
+            'deudas',
+            'saldoTotal',
+            'frecuentes',
+            'totalGastado',
+            'totalGastadoPOS',
+            'ingresosDom',
+            'totalVentasPOS',
+            'totalDom',
+            'totalCompras',
         ));
     }
 
@@ -91,59 +124,23 @@ class CustomerController extends Controller
 
     public function destroy(Customer $customer): RedirectResponse
     {
-        abort_if($customer->es_mostrador, 403);
+        abort_if($customer->es_mostrador, 403, 'No se puede eliminar el cliente de mostrador.');
 
         if ($customer->tieneVentasAsociadas()) {
-            return back()->with('error',
-                "No se puede eliminar a \"{$customer->nombre}\" porque tiene ventas registradas."
-            );
+            return redirect()->back()
+                ->with('error', 'No se puede eliminar: el cliente tiene ventas asociadas.');
         }
 
         $customer->delete();
 
-        return redirect()->route('admin.customers.index')->with('success', 'Cliente eliminado.');
+        return redirect()->route('admin.customers.index')
+            ->with('success', 'Cliente eliminado.');
     }
 
-    /**
-     * Registrar un abono a una deuda.
-     * Acepta peticiones AJAX (fetch con Accept: application/json) y formularios normales.
-     */
-    public function registrarAbono(Request $request, Debt $debt): JsonResponse|RedirectResponse
+    public function toggleActivo(Customer $customer): JsonResponse
     {
-        // Calcular el pendiente real directo de la BD para evitar
-        // problemas de cast o scopes que lo devuelvan en 0
-        $pendienteReal = (float) Debt::where('id', $debt->id)->value('monto_pendiente');
-
-        $request->validate([
-            'monto' => [
-                'required',
-                'numeric',
-                'min:1',
-                function ($attribute, $value, $fail) use ($pendienteReal) {
-                    if ((float) $value > $pendienteReal) {
-                        $fail('El monto no puede ser mayor al saldo pendiente ($'
-                            . number_format($pendienteReal, 0, ',', '.') . ').');
-                    }
-                },
-            ],
-        ], [
-            'monto.required' => 'El monto es obligatorio.',
-            'monto.numeric'  => 'El monto debe ser un número.',
-            'monto.min'      => 'El monto debe ser al menos $1.',
-        ]);
-
-        $debt->registrarPago((float) $request->monto);
-
-        // Si vino por fetch (modal Alpine) → devolver JSON
-        if ($request->expectsJson() || $request->wantsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Abono registrado correctamente.',
-                'nuevo_pendiente' => (float) Debt::where('id', $debt->id)->value('monto_pendiente'),
-            ]);
-        }
-
-        // Si vino por form normal → redirigir
-        return back()->with('success', 'Abono registrado correctamente.');
+        abort_if($customer->es_mostrador, 403);
+        $customer->update(['activo' => ! $customer->activo]);
+        return response()->json(['activo' => $customer->activo]);
     }
 }

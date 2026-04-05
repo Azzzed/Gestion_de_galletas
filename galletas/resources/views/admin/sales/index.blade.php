@@ -54,6 +54,7 @@
                     <option value="">Todos</option>
                     <option value="completada" @selected(request('estado')==='completada')>Completada</option>
                     <option value="anulada"    @selected(request('estado')==='anulada')>Anulada</option>
+                    {{-- Nota: filtrar por "entregado" oculta domicilios (filtro solo aplica a ventas POS) --}}
                 </select>
             </div>
             <div>
@@ -61,7 +62,7 @@
                 <select name="metodo_pago" class="field text-sm py-2">
                     <option value="">Todos</option>
                     <option value="efectivo"      @selected(request('metodo_pago')==='efectivo')>Efectivo</option>
-                    <option value="transferencia" @selected(request('metodo_pago')==='transferencia')>Nequi/PSE</option>
+                    <option value="transferencia" @selected(request('metodo_pago')==='transferencia')>Nequi / Transf.</option>
                     <option value="tarjeta"       @selected(request('metodo_pago')==='tarjeta')>Tarjeta</option>
                 </select>
             </div>
@@ -76,7 +77,8 @@
             </div>
             <div>
                 <label class="text-[10px] text-espresso-700/50 uppercase font-bold block mb-1">Cliente</label>
-                <input type="text" name="cliente" value="{{ request('cliente') }}" placeholder="Nombre o tel." class="field text-sm py-2">
+                <input type="text" name="cliente" value="{{ request('cliente') }}" placeholder="Nombre o tel."
+                       class="field text-sm py-2">
             </div>
             <div>
                 <label class="text-[10px] text-espresso-700/50 uppercase font-bold block mb-1">Monto mín.</label>
@@ -123,7 +125,7 @@
                     <table class="min-w-full">
                         <thead class="tbl-head">
                             <tr>
-                                <th>Factura</th>
+                                <th>Factura / Ref.</th>
                                 <th>Cliente</th>
                                 <th>Fecha</th>
                                 <th class="text-center">Items</th>
@@ -135,57 +137,114 @@
                         </thead>
                         <tbody>
                             @forelse($ventas as $venta)
-                            <tr class="tbl-row">
-                                <td><span class="font-mono text-sm font-bold text-brand-700">{{ $venta->numero_factura }}</span></td>
+                            @php
+                                $esEntrega = ($venta->_type ?? 'sale') === 'delivery';
+                                $payIcons  = [
+                                    'efectivo'      => 'payments',
+                                    'transferencia' => 'phone_iphone',
+                                    'nequi'         => 'phone_iphone',
+                                    'daviplata'     => 'account_balance_wallet',
+                                    'tarjeta'       => 'credit_card',
+                                    'contraentrega' => 'delivery_dining',
+                                ];
+                            @endphp
+                            <tr class="tbl-row {{ $esEntrega ? 'bg-blue-50/40' : '' }}">
+
+                                {{-- Factura --}}
+                                <td>
+                                    <span class="font-mono text-sm font-bold {{ $esEntrega ? 'text-blue-600' : 'text-brand-700' }}">
+                                        {{ $venta->numero_factura }}
+                                    </span>
+                                    @if($esEntrega)
+                                    <span class="block text-[10px] font-bold text-blue-400 mt-0.5">🛵 Domicilio</span>
+                                    @endif
+                                </td>
+
+                                {{-- Cliente --}}
                                 <td>
                                     <div class="flex items-center gap-2">
-                                        <div class="w-7 h-7 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-bold text-xs flex-shrink-0">
-                                            {{ strtoupper(substr($venta->customer->nombre, 0, 1)) }}
+                                        <div class="w-7 h-7 rounded-full {{ $esEntrega ? 'bg-blue-100' : 'bg-brand-100' }} flex items-center justify-center {{ $esEntrega ? 'text-blue-700' : 'text-brand-700' }} font-bold text-xs flex-shrink-0">
+                                            {{ strtoupper(substr($venta->customer->nombre ?? '?', 0, 1)) }}
                                         </div>
-                                        <span class="text-sm font-medium truncate max-w-[120px]">{{ $venta->customer->nombre }}</span>
+                                        <span class="text-sm font-medium truncate max-w-[120px]">
+                                            {{ $venta->customer->nombre ?? '—' }}
+                                        </span>
                                     </div>
                                 </td>
+
+                                {{-- Fecha --}}
                                 <td>
                                     <p class="text-sm font-medium">{{ $venta->created_at->format('d/m/Y') }}</p>
                                     <p class="text-xs text-espresso-700/40">{{ $venta->created_at->format('H:i') }}</p>
                                 </td>
+
+                                {{-- Items --}}
                                 <td class="text-center">
-                                    <span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-brand-100 text-brand-700 text-xs font-bold">
+                                    <span class="inline-flex items-center justify-center w-7 h-7 rounded-full {{ $esEntrega ? 'bg-blue-100 text-blue-700' : 'bg-brand-100 text-brand-700' }} text-xs font-bold">
                                         {{ $venta->items_count }}
                                     </span>
                                 </td>
+
+                                {{-- Método de pago --}}
                                 <td>
-                                    @php $payIcons = ['efectivo'=>'payments','transferencia'=>'phone_iphone','tarjeta'=>'credit_card']; @endphp
                                     <div class="flex items-center gap-1 text-sm">
                                         <span class="icon icon-sm text-brand-400">{{ $payIcons[$venta->metodo_pago] ?? 'payment' }}</span>
                                         <span class="capitalize text-xs">{{ $venta->metodo_pago }}</span>
                                     </div>
                                 </td>
+
+                                {{-- Total --}}
                                 <td>
                                     <p class="font-bold">{{ $venta->total_formateado }}</p>
                                     @if($venta->tiene_deuda)
-                                    <span class="badge badge-red text-[10px]"><span class="icon icon-sm">credit_card_off</span>Deuda</span>
+                                    <span class="badge badge-red text-[10px]">
+                                        <span class="icon icon-sm">credit_card_off</span>
+                                        {{ $esEntrega ? 'Pend.' : 'Deuda' }}
+                                    </span>
                                     @endif
                                 </td>
+
+                                {{-- Estado --}}
                                 <td>
+                                    @if($esEntrega)
+                                    <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                                        ✅ Entregado
+                                    </span>
+                                    @else
                                     @php $stMap = ['completada'=>'badge-green','anulada'=>'badge-red','pendiente'=>'badge-amber']; @endphp
                                     <span class="badge {{ $stMap[$venta->estado] ?? 'badge-gray' }}">{{ ucfirst($venta->estado) }}</span>
+                                    @endif
                                 </td>
+
+                                {{-- Acciones --}}
                                 <td class="text-right">
                                     <div class="flex items-center gap-1 justify-end">
+                                        @if($esEntrega)
+                                        {{-- Domicilio → ir al detalle del kanban --}}
+                                        <a href="{{ route('admin.deliveries.show', $venta->id) }}"
+                                           title="Ver domicilio"
+                                           class="w-8 h-8 rounded-lg flex items-center justify-center text-espresso-700/40 hover:text-blue-600 hover:bg-blue-50 transition-colors">
+                                            <span class="icon icon-sm">local_shipping</span>
+                                        </a>
+                                        @else
+                                        {{-- Venta POS → modal detalle + PDF + anular --}}
                                         <button @click="abrirDetalle({{ $venta->id }})"
+                                                title="Ver detalle"
                                                 class="w-8 h-8 rounded-lg flex items-center justify-center text-espresso-700/40 hover:text-brand-600 hover:bg-brand-50 transition-colors">
                                             <span class="icon icon-sm">visibility</span>
                                         </button>
-                                        <a href="{{ route('admin.sales.pdf', $venta) }}"
+                                        <a href="{{ route('admin.sales.pdf', $venta->id) }}"
+                                           title="Descargar PDF"
                                            class="w-8 h-8 rounded-lg flex items-center justify-center text-espresso-700/40 hover:text-red-500 hover:bg-red-50 transition-colors">
                                             <span class="icon icon-sm">picture_as_pdf</span>
                                         </a>
                                         @if($venta->estado === 'completada')
                                         <button @click="anular({{ $venta->id }})"
+                                                title="Anular venta"
                                                 class="w-8 h-8 rounded-lg flex items-center justify-center text-espresso-700/40 hover:text-red-500 hover:bg-red-50 transition-colors">
                                             <span class="icon icon-sm">block</span>
                                         </button>
+                                        @endif
                                         @endif
                                     </div>
                                 </td>
@@ -241,7 +300,7 @@
         </div>
     </div>
 
-    {{-- Modal detalle --}}
+    {{-- Modal detalle (solo para ventas POS) --}}
     <div x-show="modalAbierto" x-cloak x-transition
          @click.self="cerrarModal()"
          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-espresso-900/50 backdrop-blur-sm">
@@ -272,7 +331,7 @@
                             </div>
                         </div>
                         <div>
-                            <p class="text-[10px] font-bold text-espresso-700/50 uppercase mb-2">Productos</p>
+                            <p class="text-[10px] text-espresso-700/50 uppercase font-bold mb-2">Productos</p>
                             <div class="space-y-1.5">
                                 <template x-for="item in venta.items" :key="item.nombre">
                                     <div class="flex items-center justify-between bg-cream-50 rounded-xl px-4 py-2.5 border border-cream-200">
@@ -297,29 +356,45 @@
             </div>
         </div>
     </div>
+
 </div>
 
 @push('styles')
 <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
 @endpush
+
 @push('scripts')
 <script>
 function salesTable() {
     return {
-        modalAbierto: false, cargando: false, venta: null,
+        modalAbierto: false,
+        cargando: false,
+        venta: null,
+
         async abrirDetalle(id) {
-            this.modalAbierto=true; this.cargando=true; this.venta=null;
-            const res = await fetch(`/admin/sales/${id}/detalle`);
-            this.venta = await res.json(); this.cargando=false;
+            this.modalAbierto = true;
+            this.cargando     = true;
+            this.venta        = null;
+            const res  = await fetch(`/admin/sales/${id}/detalle`);
+            this.venta = await res.json();
+            this.cargando = false;
         },
-        cerrarModal() { this.modalAbierto=false; this.venta=null; },
+
+        cerrarModal() {
+            this.modalAbierto = false;
+            this.venta        = null;
+        },
+
         async anular(id) {
             if (!confirm('¿Estás seguro de que deseas anular esta venta?')) return;
             const motivo = prompt('Motivo de anulación (opcional):') ?? '';
             const res = await fetch(`/admin/sales/${id}/anular`, {
-                method:'PATCH',
-                headers:{'Content-Type':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name=csrf-token]').content},
-                body:JSON.stringify({motivo}),
+                method:  'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                },
+                body: JSON.stringify({ motivo }),
             });
             const data = await res.json();
             if (data.success) window.location.reload();

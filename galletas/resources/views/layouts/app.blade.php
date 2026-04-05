@@ -238,6 +238,10 @@
                         <span class="icon icon-sm">analytics</span>
                         <span class="hidden sm:inline">Estadísticas</span>
                     </a>
+
+                    <form method="POST" action="{{ route('logout') }}">@csrf
+    <button type="submit">Salir</button>
+</form>
             </div>
         </div>
     </div>
