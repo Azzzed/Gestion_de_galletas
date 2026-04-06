@@ -15,15 +15,12 @@ use Illuminate\Support\Facades\Route;
 // AUTH — Login / Logout
 // ══════════════════════════════════════════════════════════════
 
-// Login de sucursal (admin + vendedor)
 Route::get('/login',  [LoginController::class, 'showLogin'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->name('login.submit');
 
-// Login de super admin del sistema
 Route::get('/superadmin/login',  [LoginController::class, 'showSuperAdminLogin'])->name('superadmin.login');
 Route::post('/superadmin/login', [LoginController::class, 'superAdminLogin'])->name('superadmin.login.submit');
 
-// Logout universal
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 // ══════════════════════════════════════════════════════════════
@@ -33,7 +30,6 @@ Route::prefix('superadmin')->name('superadmin.')->middleware('role:superadmin')-
 
     Route::get('/', [SuperAdminController::class, 'dashboard'])->name('dashboard');
 
-    // Sucursales
     Route::prefix('branches')->name('branches.')->group(function () {
         Route::get('/',            [SuperAdminController::class, 'branches'])->name('index');
         Route::get('/create',      [SuperAdminController::class, 'branchCreate'])->name('create');
@@ -44,19 +40,17 @@ Route::prefix('superadmin')->name('superadmin.')->middleware('role:superadmin')-
     });
     Route::get('/branches', [SuperAdminController::class, 'branches'])->name('branches');
 
-    // Usuarios (admins de sucursal + vendedores)
     Route::prefix('users')->name('users.')->group(function () {
-        Route::get('/',          [SuperAdminController::class, 'users'])->name('index');
-        Route::get('/create',    [SuperAdminController::class, 'userCreate'])->name('create');
-        Route::post('/',         [SuperAdminController::class, 'userStore'])->name('store');
-        Route::get('/{user}',    [SuperAdminController::class, 'userEdit'])->name('edit');
-        Route::put('/{user}',    [SuperAdminController::class, 'userUpdate'])->name('update');
-        Route::delete('/{user}', [SuperAdminController::class, 'userDestroy'])->name('destroy');
+        Route::get('/',                [SuperAdminController::class, 'users'])->name('index');
+        Route::get('/create',          [SuperAdminController::class, 'userCreate'])->name('create');
+        Route::post('/',               [SuperAdminController::class, 'userStore'])->name('store');
+        Route::get('/{user}',          [SuperAdminController::class, 'userEdit'])->name('edit');
+        Route::put('/{user}',          [SuperAdminController::class, 'userUpdate'])->name('update');
+        Route::delete('/{user}',       [SuperAdminController::class, 'userDestroy'])->name('destroy');
         Route::patch('/{user}/toggle', [SuperAdminController::class, 'userToggle'])->name('toggle');
     });
     Route::get('/users', [SuperAdminController::class, 'users'])->name('users');
 
-    // Reportes globales
     Route::get('/ventas',     [SuperAdminController::class, 'ventas'])->name('ventas');
     Route::get('/domicilios', [SuperAdminController::class, 'domicilios'])->name('domicilios');
     Route::get('/inventario', [SuperAdminController::class, 'inventario'])->name('inventario');
@@ -95,46 +89,35 @@ Route::prefix('admin')->name('admin.')->middleware('role:vendedor')->group(funct
     Route::post('customers/debts/{debt}/abono', [CustomerController::class, 'registrarAbono'])->name('customers.abono');
 
     // ── Historial de ventas ────────────────────────────── vendedor (solo ver + PDF)
+    // ✅ Las rutas estáticas SIEMPRE antes de las dinámicas {sale}
     Route::get('sales/top-clients',    [SaleHistoryController::class, 'topClientes'])->name('sales.top-clients');
     Route::get('sales',                [SaleHistoryController::class, 'index'])->name('sales.index');
     Route::get('sales/{sale}/detalle', [SaleHistoryController::class, 'detalle'])->name('sales.detalle');
     Route::get('sales/{sale}/pdf',     [SaleHistoryController::class, 'exportarPdf'])->name('sales.pdf');
     Route::get('sales/{sale}',         [SaleHistoryController::class, 'show'])->name('sales.show');
 
-    // Anular venta: SOLO admin
+    // Anular y eliminar: SOLO admin
     Route::patch('sales/{sale}/anular', [SaleHistoryController::class, 'anular'])
         ->name('sales.anular')
         ->middleware('role:admin');
-
-
-
-
-    // ── Historial de ventas ────────────────────────────── vendedor (solo ver + PDF)
-    Route::get('sales/top-clients',    [SaleHistoryController::class, 'topClientes'])->name('sales.top-clients');
-    Route::get('sales',                [SaleHistoryController::class, 'index'])->name('sales.index');
-    Route::get('sales/{sale}/detalle', [SaleHistoryController::class, 'detalle'])->name('sales.detalle');
-    Route::get('sales/{sale}/pdf',     [SaleHistoryController::class, 'exportarPdf'])->name('sales.pdf');
-    Route::get('sales/{sale}',         [SaleHistoryController::class, 'show'])->name('sales.show');
-
-    // Anular venta: SOLO admin
-    Route::patch('sales/{sale}/anular', [SaleHistoryController::class, 'anular'])
-        ->name('sales.anular')
-        ->middleware('role:admin');
-
-    // ✅ NUEVO: Eliminar venta (soft delete): SOLO admin
     Route::delete('sales/{sale}', [SaleHistoryController::class, 'destroy'])
         ->name('sales.destroy')
         ->middleware('role:admin');
 
-
     // ── Galletas ───────────────────────────────────────── vendedor solo ver
-    Route::get('cookies',          [CookieController::class, 'index'])->name('cookies.index');
+    // ✅ FIX: rutas estáticas (index, create, store) ANTES de las dinámicas ({cookie})
+    Route::get('cookies',  [CookieController::class, 'index'])->name('cookies.index');
+
+    Route::middleware('role:admin')->group(function () {
+        // ✅ create y store VAN ANTES que cookies/{cookie}
+        Route::get('cookies/create',  [CookieController::class, 'create'])->name('cookies.create');
+        Route::post('cookies',        [CookieController::class, 'store'])->name('cookies.store');
+    });
+
+    // Rutas con parámetro {cookie} — después de las estáticas
     Route::get('cookies/{cookie}', [CookieController::class, 'show'])->name('cookies.show');
 
-    // Crear / editar / eliminar galletas: SOLO admin
     Route::middleware('role:admin')->group(function () {
-        Route::get('cookies/create',           [CookieController::class, 'create'])->name('cookies.create');
-        Route::post('cookies',                 [CookieController::class, 'store'])->name('cookies.store');
         Route::get('cookies/{cookie}/edit',    [CookieController::class, 'edit'])->name('cookies.edit');
         Route::put('cookies/{cookie}',         [CookieController::class, 'update'])->name('cookies.update');
         Route::delete('cookies/{cookie}',      [CookieController::class, 'destroy'])->name('cookies.destroy');

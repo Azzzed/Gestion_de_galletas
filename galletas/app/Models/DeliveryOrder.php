@@ -14,25 +14,12 @@ class DeliveryOrder extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'customer_id',
-        'customer_name',
-        'customer_phone',
-        'delivery_address',
-        'delivery_neighborhood',
-        'delivery_cost_type',
-        'delivery_cost',
-        'items',
-        'subtotal',
-        'discount_amount',
-        'total',
-        'payment_method',
-        'payment_status',
-        'paid_amount',
-        'status',
-        'promo_code',
-        'notes',
-        'scheduled_at',
-        'cajero_id',
+        'customer_id', 'customer_name', 'customer_phone',
+        'delivery_address', 'delivery_neighborhood',
+        'delivery_cost_type', 'delivery_cost',
+        'items', 'subtotal', 'discount_amount', 'total',
+        'payment_method', 'payment_status', 'paid_amount',
+        'status', 'promo_code', 'notes', 'scheduled_at', 'cajero_id',
     ];
 
     protected $casts = [
@@ -52,7 +39,6 @@ class DeliveryOrder extends Model
         return $this->belongsTo(Customer::class);
     }
 
-    // ✅ FIX: relación branch que faltaba (usada en reportes de SuperAdmin)
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
@@ -103,11 +89,13 @@ class DeliveryOrder extends Model
         };
     }
 
+    // ✅ FIX: 'debt' como método de pago (domicilio fiado)
     public function getPaymentMethodLabelAttribute(): string
     {
         return match ($this->payment_method) {
-            'cash_on_delivery' => 'Paga al llegar',
+            'cash_on_delivery' => 'Contraentrega',
             'transfer'         => 'Transferencia',
+            'debt'             => '🫱 Fiado',
             default            => $this->payment_method,
         };
     }
@@ -169,9 +157,5 @@ class DeliveryOrder extends Model
     public function scopeDispatched(Builder $q): Builder { return $q->where('status', 'dispatched'); }
     public function scopeDelivered(Builder $q): Builder  { return $q->where('status', 'delivered'); }
     public function scopeActive(Builder $q): Builder     { return $q->whereIn('status', ['scheduled', 'dispatched']); }
-
-    public function scopeToday(Builder $q): Builder
-    {
-        return $q->whereDate('created_at', today());
-    }
+    public function scopeToday(Builder $q): Builder      { return $q->whereDate('created_at', today()); }
 }

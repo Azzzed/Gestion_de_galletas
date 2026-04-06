@@ -32,7 +32,6 @@
                             class="bg-white rounded-2xl p-3 text-left border border-cream-200
                                    hover:border-brand-400 hover:shadow-lg active:scale-95
                                    transition-all duration-200 group shadow-sm relative overflow-hidden">
-                        {{-- Image --}}
                         <div class="w-full aspect-square rounded-xl overflow-hidden mb-2.5"
                              style="background:#fbf3e2">
                             <template x-if="g.imagen_path">
@@ -45,7 +44,6 @@
                                 </div>
                             </template>
                         </div>
-                        {{-- Info --}}
                         <p class="font-bold text-sm text-espresso-800 truncate" x-text="g.nombre"></p>
                         <div class="flex flex-wrap gap-1 my-1.5">
                             <template x-for="r in (g.rellenos||[])" :key="r">
@@ -56,7 +54,6 @@
                             <span class="text-brand-600 font-bold text-sm" x-text="fmt(g.precio)"></span>
                             <span class="text-[10px] text-espresso-700/60 bg-cream-100 px-2 py-0.5 rounded-full font-medium capitalize" x-text="g.tamano"></span>
                         </div>
-                        {{-- Hover accent --}}
                         <div class="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-brand-400 to-brand-600 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                     </button>
                 </template>
@@ -174,7 +171,7 @@
         {{-- Footer: totales + pago --}}
         <div x-show="carrito.length>0" x-cloak class="border-t border-cream-200 px-4 py-4 space-y-3">
 
-            {{-- ── CÓDIGO PROMOCIONAL ────────────────────────── --}}
+            {{-- Código promocional --}}
             <div x-show="carrito.length>0" x-transition>
                 <div class="flex gap-2">
                     <div class="relative flex-1">
@@ -264,7 +261,14 @@
                 <span class="icon icon-sm ml-auto" :class="tieneDeuda ? 'text-red-500' : 'text-espresso-700/30'">credit_card_off</span>
             </div>
 
-            {{-- ── BOTÓN DOMICILIO ───────────────────────────── --}}
+            {{-- Pista cuando no hay cliente seleccionado --}}
+            <div x-show="cliente.id===1" x-cloak
+                 class="flex items-center gap-2 px-3 py-2 rounded-xl border border-cream-200 bg-cream-50 text-espresso-700/40">
+                <span class="icon icon-sm">credit_card_off</span>
+                <p class="text-xs">Selecciona un cliente para registrar como deuda</p>
+            </div>
+
+            {{-- Botón domicilio --}}
             <button @click="showDelivery=true"
                     class="w-full py-2.5 rounded-xl border-2 border-blue-300 text-blue-700 font-bold text-sm
                            hover:bg-blue-50 active:scale-95 transition-all flex items-center justify-center gap-2">
@@ -318,7 +322,6 @@
             {{-- Cuerpo scrolleable --}}
             <div class="overflow-y-auto flex-1 p-6 space-y-5">
 
-                {{-- ── SECCIÓN CLIENTE ─────────────────────────── --}}
                 {{-- Toggle: cliente registrado vs mostrador --}}
                 <div class="grid grid-cols-2 gap-2">
                     <button type="button"
@@ -343,8 +346,6 @@
 
                 {{-- MODO: Cliente registrado --}}
                 <div x-show="deliv.modo_cliente === 'registrado'" x-transition>
-
-                    {{-- Buscador de cliente --}}
                     <div class="relative">
                         <label class="block text-xs font-bold text-espresso-700/60 uppercase tracking-wider mb-1.5">
                             Buscar cliente <span class="text-red-400">*</span>
@@ -364,8 +365,6 @@
                                 <span class="icon icon-sm">close</span>
                             </button>
                         </div>
-
-                        {{-- Dropdown resultados --}}
                         <div x-show="deliv.showDropdown && deliv.resultadosCliente.length > 0 && !deliv.clienteSeleccionado"
                              @click.away="deliv.showDropdown = false"
                              class="absolute top-full left-0 right-0 z-40 mt-1 bg-white rounded-2xl shadow-2xl border border-cream-200 overflow-hidden max-h-52 overflow-y-auto">
@@ -388,10 +387,7 @@
                         </div>
                     </div>
 
-                    {{-- Cliente seleccionado: info + sus direcciones --}}
-                    <div x-show="deliv.clienteSeleccionado" x-transition class="space-y-3">
-
-                        {{-- Chip del cliente --}}
+                    <div x-show="deliv.clienteSeleccionado" x-transition class="space-y-3 mt-3">
                         <div class="flex items-center gap-3 p-3 rounded-xl bg-blue-50 border border-blue-200">
                             <div class="w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
                                 <span class="icon icon-sm text-white">person</span>
@@ -403,18 +399,13 @@
                             <span class="text-[10px] bg-blue-500 text-white px-2 py-0.5 rounded-full font-bold">Registrado</span>
                         </div>
 
-                        {{-- Direcciones guardadas del cliente --}}
                         <div x-show="deliv.clienteSeleccionado?.direcciones?.length > 0">
-                            <p class="text-xs font-bold text-espresso-700/60 uppercase tracking-wider mb-2">
-                                Direcciones guardadas
-                            </p>
+                            <p class="text-xs font-bold text-espresso-700/60 uppercase tracking-wider mb-2">Direcciones guardadas</p>
                             <div class="space-y-1.5">
                                 <template x-for="(dir, idx) in (deliv.clienteSeleccionado?.direcciones ?? [])" :key="idx">
                                     <button type="button"
                                             @click="seleccionarDireccion(dir)"
-                                            :class="deliv.delivery_address === dir.direccion
-                                                ? 'border-blue-500 bg-blue-50'
-                                                : 'border-cream-200 bg-white hover:border-blue-300'"
+                                            :class="deliv.delivery_address === dir.direccion ? 'border-blue-500 bg-blue-50' : 'border-cream-200 bg-white hover:border-blue-300'"
                                             class="w-full flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-all">
                                         <span class="icon icon-sm text-blue-500 flex-shrink-0">location_on</span>
                                         <div class="flex-1 min-w-0">
@@ -428,7 +419,6 @@
                             </div>
                         </div>
 
-                        {{-- Nueva dirección para cliente registrado --}}
                         <div>
                             <div class="flex items-center justify-between mb-2">
                                 <p class="text-xs font-bold text-espresso-700/60 uppercase tracking-wider">
@@ -443,7 +433,6 @@
                                 <input type="text" x-model="deliv.delivery_neighborhood"
                                        placeholder="Barrio"
                                        class="field text-sm">
-                                {{-- Toggle guardar dirección --}}
                                 <label class="flex items-center gap-2 px-3 py-2 rounded-xl border border-cream-200 bg-cream-50 cursor-pointer hover:border-blue-300 transition-all">
                                     <input type="checkbox" x-model="deliv.guardar_direccion" class="accent-blue-500 w-4 h-4">
                                     <span class="text-xs font-semibold text-espresso-700">Guardar en perfil</span>
@@ -451,82 +440,56 @@
                                 </label>
                             </div>
                         </div>
+                    </div>
 
-                    </div>{{-- fin cliente seleccionado --}}
-
-                    {{-- Hint si no ha buscado --}}
                     <div x-show="!deliv.clienteSeleccionado && !deliv.queryCliente"
-                         class="flex items-center gap-2 px-3 py-2 rounded-xl bg-blue-50 border border-blue-100 text-xs text-blue-600">
+                         class="flex items-center gap-2 px-3 py-2 rounded-xl bg-blue-50 border border-blue-100 text-xs text-blue-600 mt-3">
                         <span class="icon icon-sm">info</span>
                         Escribe el nombre o teléfono del cliente para buscarlo.
                     </div>
                 </div>
 
-                {{-- MODO: Sin registro (mostrador) --}}
+                {{-- MODO: Sin registro --}}
                 <div x-show="deliv.modo_cliente === 'mostrador'" x-transition>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-bold text-espresso-700/60 uppercase tracking-wider mb-1.5">
-                                Nombre del cliente
-                            </label>
-                            <input type="text" x-model="deliv.customer_name"
-                                   placeholder="Ej: María García"
-                                   class="field text-sm">
+                            <label class="block text-xs font-bold text-espresso-700/60 uppercase tracking-wider mb-1.5">Nombre del cliente</label>
+                            <input type="text" x-model="deliv.customer_name" placeholder="Ej: María García" class="field text-sm">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-espresso-700/60 uppercase tracking-wider mb-1.5">
-                                Teléfono de contacto
-                            </label>
-                            <input type="text" x-model="deliv.customer_phone"
-                                   placeholder="Ej: 300 123 4567"
-                                   class="field text-sm">
+                            <label class="block text-xs font-bold text-espresso-700/60 uppercase tracking-wider mb-1.5">Teléfono de contacto</label>
+                            <input type="text" x-model="deliv.customer_phone" placeholder="Ej: 300 123 4567" class="field text-sm">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-espresso-700/60 uppercase tracking-wider mb-1.5">
-                                Dirección de envío <span class="text-red-400">*</span>
-                            </label>
-                            <input type="text" x-model="deliv.delivery_address"
-                                   placeholder="Cra 15 #45-20 Apto 301"
-                                   class="field text-sm">
+                            <label class="block text-xs font-bold text-espresso-700/60 uppercase tracking-wider mb-1.5">Dirección de envío <span class="text-red-400">*</span></label>
+                            <input type="text" x-model="deliv.delivery_address" placeholder="Cra 15 #45-20 Apto 301" class="field text-sm">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-espresso-700/60 uppercase tracking-wider mb-1.5">
-                                Barrio
-                            </label>
-                            <input type="text" x-model="deliv.delivery_neighborhood"
-                                   placeholder="Ej: El Prado"
-                                   class="field text-sm">
+                            <label class="block text-xs font-bold text-espresso-700/60 uppercase tracking-wider mb-1.5">Barrio</label>
+                            <input type="text" x-model="deliv.delivery_neighborhood" placeholder="Ej: El Prado" class="field text-sm">
                         </div>
                     </div>
                 </div>
 
                 {{-- Tipo de envío --}}
                 <div>
-                    <label class="block text-xs font-bold text-espresso-700/60 uppercase tracking-wider mb-2">
-                        Tipo de envío
-                    </label>
+                    <label class="block text-xs font-bold text-espresso-700/60 uppercase tracking-wider mb-2">Tipo de envío</label>
                     <div class="grid grid-cols-3 gap-2">
-                        <label :class="deliv.delivery_cost_type==='additional'
-                                    ? 'border-brand-500 bg-brand-50'
-                                    : 'border-cream-200 bg-white hover:border-brand-300'"
+                        <label :class="deliv.delivery_cost_type==='additional' ? 'border-brand-500 bg-brand-50' : 'border-cream-200 bg-white hover:border-brand-300'"
                                class="flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 cursor-pointer transition-all">
                             <input type="radio" x-model="deliv.delivery_cost_type" value="additional" class="sr-only">
                             <span class="icon text-brand-500">attach_money</span>
                             <span class="text-xs font-bold text-espresso-800 text-center">Cobrado al cliente</span>
                             <span class="text-[10px] text-espresso-700/50 text-center">Se suma al pedido</span>
                         </label>
-                        <label :class="deliv.delivery_cost_type==='free'
-                                    ? 'border-green-500 bg-green-50'
-                                    : 'border-cream-200 bg-white hover:border-green-300'"
+                        <label :class="deliv.delivery_cost_type==='free' ? 'border-green-500 bg-green-50' : 'border-cream-200 bg-white hover:border-green-300'"
                                class="flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 cursor-pointer transition-all">
                             <input type="radio" x-model="deliv.delivery_cost_type" value="free" class="sr-only">
                             <span class="icon text-green-500">local_shipping</span>
                             <span class="text-xs font-bold text-espresso-800 text-center">Gratis al cliente</span>
                             <span class="text-[10px] text-espresso-700/50 text-center">Lo asume el negocio</span>
                         </label>
-                        <label :class="deliv.delivery_cost_type==='business'
-                                    ? 'border-blue-500 bg-blue-50'
-                                    : 'border-cream-200 bg-white hover:border-blue-300'"
+                        <label :class="deliv.delivery_cost_type==='business' ? 'border-blue-500 bg-blue-50' : 'border-cream-200 bg-white hover:border-blue-300'"
                                class="flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 cursor-pointer transition-all">
                             <input type="radio" x-model="deliv.delivery_cost_type" value="business" class="sr-only">
                             <span class="icon text-blue-500">storefront</span>
@@ -538,20 +501,16 @@
 
                 {{-- Valor del envío --}}
                 <div x-show="deliv.delivery_cost_type==='additional'" x-transition>
-                    <label class="block text-xs font-bold text-espresso-700/60 uppercase tracking-wider mb-1.5">
-                        Valor del envío ($)
-                    </label>
-                    <input type="number" x-model="deliv.delivery_cost" min="0" step="500"
-                           placeholder="3000"
-                           class="field text-sm">
+                    <label class="block text-xs font-bold text-espresso-700/60 uppercase tracking-wider mb-1.5">Valor del envío ($)</label>
+                    <input type="number" x-model="deliv.delivery_cost" min="0" step="500" placeholder="3000" class="field text-sm">
                 </div>
 
-                {{-- Método de pago --}}
+                {{-- ── Método de pago ───────────────────────────── --}}
                 <div>
                     <label class="block text-xs font-bold text-espresso-700/60 uppercase tracking-wider mb-2">
                         Método de pago <span class="text-red-400">*</span>
                     </label>
-                    <div class="grid grid-cols-2 gap-2">
+                    <div class="grid grid-cols-2 gap-2 mb-2">
                         <label :class="deliv.payment_method==='cash_on_delivery'
                                     ? 'border-brand-500 bg-brand-50'
                                     : 'border-cream-200 bg-white hover:border-brand-300'"
@@ -575,13 +534,42 @@
                             </div>
                         </label>
                     </div>
+
+                    {{-- ✅ NUEVO: Fiado — requiere cliente registrado --}}
+                    <label :class="deliv.payment_method==='debt'
+                                ? 'border-red-400 bg-red-50'
+                                : (deliv.clienteSeleccionado
+                                    ? 'border-cream-200 bg-white hover:border-red-300 cursor-pointer'
+                                    : 'border-cream-100 bg-cream-50 opacity-50 cursor-not-allowed')"
+                           class="flex items-center gap-3 p-3 rounded-xl border-2 transition-all w-full">
+                        <input type="radio" x-model="deliv.payment_method" value="debt" class="sr-only"
+                               :disabled="!deliv.clienteSeleccionado">
+                        <span class="icon flex-shrink-0"
+                              :class="deliv.payment_method==='debt' ? 'text-red-500' : 'text-espresso-700/40'">
+                            credit_card_off
+                        </span>
+                        <div class="flex-1">
+                            <p class="text-sm font-bold text-espresso-800">🫱 Fiado / Deuda</p>
+                            <p class="text-[10px]"
+                               :class="deliv.payment_method==='debt' ? 'text-red-500' : 'text-espresso-700/50'">
+                                <span x-show="deliv.clienteSeleccionado">
+                                    Queda como cuenta por cobrar de <strong x-text="deliv.clienteSeleccionado?.nombre"></strong>
+                                </span>
+                                <span x-show="!deliv.clienteSeleccionado" class="text-amber-600">
+                                    ⚠ Selecciona un cliente registrado para usar esta opción
+                                </span>
+                            </p>
+                        </div>
+                        <span x-show="deliv.payment_method==='debt'"
+                              class="text-[10px] font-bold bg-red-100 text-red-600 px-2 py-0.5 rounded-full flex-shrink-0">
+                            Deuda
+                        </span>
+                    </label>
                 </div>
 
-                {{-- Código promo para domicilio --}}
+                {{-- Código promo --}}
                 <div>
-                    <label class="block text-xs font-bold text-espresso-700/60 uppercase tracking-wider mb-1.5">
-                        Código Promocional
-                    </label>
+                    <label class="block text-xs font-bold text-espresso-700/60 uppercase tracking-wider mb-1.5">Código Promocional</label>
                     <div class="flex gap-2">
                         <input type="text" x-model="deliv.promo_code"
                                @input="deliv.promo_code=$event.target.value.toUpperCase(); promoResultDeliv=null"
@@ -601,29 +589,22 @@
                     </div>
                     <div x-show="promoResultDeliv" x-transition
                          class="mt-1.5 px-3 py-2 rounded-lg text-xs font-semibold"
-                         :class="promoResultDeliv?.valid
-                            ? 'bg-green-50 border border-green-200 text-green-700'
-                            : 'bg-red-50   border border-red-200   text-red-700'"
+                         :class="promoResultDeliv?.valid ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'"
                          x-text="promoResultDeliv?.message">
                     </div>
                 </div>
 
                 {{-- Notas --}}
                 <div>
-                    <label class="block text-xs font-bold text-espresso-700/60 uppercase tracking-wider mb-1.5">
-                        Notas para el pedido
-                    </label>
+                    <label class="block text-xs font-bold text-espresso-700/60 uppercase tracking-wider mb-1.5">Notas para el pedido</label>
                     <textarea x-model="deliv.notes" rows="2"
                               placeholder="Ej: Apartamento 5B, timbre no funciona, llamar al llegar…"
                               class="field text-sm resize-none"></textarea>
                 </div>
 
-                {{-- Resumen del pedido --}}
-                <div class="rounded-2xl p-4 space-y-2 text-sm"
-                     style="background:#FBF3E2;border:1px solid #EED9A0">
-                    <p class="text-xs font-bold text-espresso-700/50 uppercase tracking-wide mb-3">
-                        Resumen del pedido
-                    </p>
+                {{-- Resumen --}}
+                <div class="rounded-2xl p-4 space-y-2 text-sm" style="background:#FBF3E2;border:1px solid #EED9A0">
+                    <p class="text-xs font-bold text-espresso-700/50 uppercase tracking-wide mb-3">Resumen del pedido</p>
                     <template x-for="item in carrito" :key="item.id">
                         <div class="flex justify-between text-espresso-700">
                             <span x-text="item.cantidad+'× '+item.nombre"></span>
@@ -639,8 +620,7 @@
                             <span>Envío</span>
                             <span x-text="fmt(deliveryCostCalc)"></span>
                         </div>
-                        <div x-show="deliv.delivery_cost_type==='free'"
-                             class="flex justify-between text-green-600 font-semibold">
+                        <div x-show="deliv.delivery_cost_type==='free'" class="flex justify-between text-green-600 font-semibold">
                             <span>Envío</span>
                             <span>¡Gratis!</span>
                         </div>
@@ -654,26 +634,33 @@
                             <span class="text-blue-700" x-text="fmt(totalConEnvio)"></span>
                         </div>
                     </div>
+                    {{-- Aviso fiado --}}
+                    <div x-show="deliv.payment_method==='debt'" x-transition
+                         class="mt-2 flex items-center gap-2 px-3 py-2 rounded-xl bg-red-50 border border-red-200">
+                        <span class="icon icon-sm text-red-500">warning</span>
+                        <p class="text-xs text-red-600 font-semibold">Este domicilio quedará como deuda pendiente del cliente</p>
+                    </div>
                 </div>
 
             </div>{{-- fin cuerpo --}}
 
-            {{-- Footer del modal --}}
+            {{-- Footer --}}
             <div class="px-6 py-4 border-t border-cream-200 flex gap-3 flex-shrink-0 bg-white">
-                <button @click="showDelivery=false"
-                        class="flex-1 btn-ghost justify-center py-3">
+                <button @click="showDelivery=false" class="flex-1 btn-ghost justify-center py-3">
                     Cancelar
                 </button>
                 <button @click="crearDomicilio()"
                         :disabled="!puedeCrearDomicilio || procesandoDomicilio"
                         :class="puedeCrearDomicilio && !procesandoDomicilio
-                                ? 'bg-gradient-to-r from-blue-700 to-blue-500 hover:from-blue-800 hover:to-blue-600 shadow-lg shadow-blue-200'
+                                ? (deliv.payment_method==='debt'
+                                    ? 'bg-gradient-to-r from-red-700 to-red-500 hover:from-red-800 hover:to-red-600 shadow-lg shadow-red-200'
+                                    : 'bg-gradient-to-r from-blue-700 to-blue-500 hover:from-blue-800 hover:to-blue-600 shadow-lg shadow-blue-200')
                                 : 'bg-gray-200 text-gray-400 cursor-not-allowed'"
                         class="flex-1 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all">
                     <template x-if="!procesandoDomicilio">
                         <span class="flex items-center gap-2">
-                            <span class="icon icon-sm">local_shipping</span>
-                            Registrar Domicilio
+                            <span class="icon icon-sm" x-text="deliv.payment_method==='debt' ? 'credit_card_off' : 'local_shipping'"></span>
+                            <span x-text="deliv.payment_method==='debt' ? 'Registrar Fiado' : 'Registrar Domicilio'"></span>
                         </span>
                     </template>
                     <template x-if="procesandoDomicilio">
@@ -706,13 +693,11 @@
 <script>
 function posApp() {
     return {
-        // ── Catálogo ───────────────────────────────────────────
         todasLasGalletas: @json($galletas->flatten()->values()),
         galletasFiltradas: [],
         busqueda: '',
         filtroTamano: '',
 
-        // ── Carrito ────────────────────────────────────────────
         carrito: [],
         cliente: { id: 1, nombre: 'Cliente de Mostrador' },
         showClientes: false,
@@ -728,31 +713,24 @@ function posApp() {
             { id: 'tarjeta',       label: 'Tarjeta',   icon: 'credit_card'   },
         ],
 
-        // ── Código promo (venta normal) ────────────────────────
         codigoPromo: '',
         promoResult: null,
         promoDescuento: 0,
 
-        // ── Domicilios ─────────────────────────────────────────
         showDelivery: false,
         procesandoDomicilio: false,
         promoResultDeliv: null,
         deliv: {
-            // Modo: 'registrado' o 'mostrador'
             modo_cliente:          'registrado',
-            // Cliente registrado
             clienteSeleccionado:   null,
             queryCliente:          '',
             resultadosCliente:     [],
             showDropdown:          false,
             guardar_direccion:     false,
-            // Cliente mostrador
             customer_name:         '',
             customer_phone:        '',
-            // Dirección (compartida)
             delivery_address:      '',
             delivery_neighborhood: '',
-            // Envío y pago
             delivery_cost_type:    'additional',
             delivery_cost:         3000,
             payment_method:        'cash_on_delivery',
@@ -760,12 +738,10 @@ function posApp() {
             notes:                 '',
         },
 
-        // ── Init ───────────────────────────────────────────────
         init() {
             this.galletasFiltradas = this.todasLasGalletas;
         },
 
-        // ── Catálogo ───────────────────────────────────────────
         filtrar() {
             const t = this.busqueda.toLowerCase();
             this.galletasFiltradas = this.todasLasGalletas.filter(g => {
@@ -776,43 +752,41 @@ function posApp() {
             });
         },
 
-        // ── Carrito ────────────────────────────────────────────
+        agregar(g) {
+            const i = this.carrito.findIndex(x => x.id === g.id);
+            const cantidadEnCarrito = i >= 0 ? this.carrito[i].cantidad : 0;
+            if (cantidadEnCarrito >= g.stock) {
+                alert(`Solo hay ${g.stock} unidades de "${g.nombre}" disponibles.`);
+                return;
+            }
+            if (i >= 0) {
+                this.carrito[i].cantidad++;
+            } else {
+                this.carrito.push({ ...g, cantidad: 1 });
+            }
+            this.recalcular();
+        },
 
-agregar(g) {
-    const i = this.carrito.findIndex(x => x.id === g.id);
-    const cantidadEnCarrito = i >= 0 ? this.carrito[i].cantidad : 0;
+        inc(i) {
+            const item = this.carrito[i];
+            const galleta = this.todasLasGalletas.find(g => g.id === item.id);
+            const stockMax = galleta ? galleta.stock : 999;
+            if (item.cantidad >= stockMax) {
+                alert(`Solo hay ${stockMax} unidades de "${item.nombre}" disponibles.`);
+                return;
+            }
+            this.carrito[i].cantidad++;
+            this.recalcular();
+        },
 
-    if (cantidadEnCarrito >= g.stock) {
-        alert(`Solo hay ${g.stock} unidades de "${g.nombre}" disponibles.`);
-        return;
-    }
+        dec(i) {
+            this.carrito[i].cantidad > 1
+                ? this.carrito[i].cantidad--
+                : this.carrito.splice(i, 1);
+            this.recalcular();
+        },
 
-    if (i >= 0) {
-        this.carrito[i].cantidad++;
-    } else {
-        this.carrito.push({ ...g, cantidad: 1 });
-    }
-    this.recalcular();
-},
-
-inc(i) {
-    const item = this.carrito[i];                                    // ← sacar el item por índice
-    const galleta = this.todasLasGalletas.find(g => g.id === item.id);
-    const stockMax = galleta ? galleta.stock : 999;
-    if (item.cantidad >= stockMax) {
-        alert(`Solo hay ${stockMax} unidades de "${item.nombre}" disponibles.`);
-        return;
-    }
-    this.carrito[i].cantidad++;
-    this.recalcular();
-},
-
-dec(i) {
-    this.carrito[i].cantidad > 1
-        ? this.carrito[i].cantidad--
-        : this.carrito.splice(i, 1);
-    this.recalcular();             // ← faltaba
-},
+        recalcular() {},
 
         limpiar() {
             this.carrito      = [];
@@ -822,7 +796,6 @@ dec(i) {
             this.limpiarPromo();
         },
 
-        // ── Getters carrito ────────────────────────────────────
         get totalItems()     { return this.carrito.reduce((s, i) => s + i.cantidad, 0); },
         get subtotal()       { return this.carrito.reduce((s, i) => s + i.precio * i.cantidad, 0); },
         get descuentoValor() {
@@ -831,7 +804,6 @@ dec(i) {
         },
         get total()          { return Math.max(0, this.subtotal - this.descuentoValor); },
 
-        // ── Getters domicilio ──────────────────────────────────
         get deliveryCostCalc() {
             if (this.deliv.delivery_cost_type !== 'additional') return 0;
             return parseFloat(this.deliv.delivery_cost) || 0;
@@ -846,52 +818,44 @@ dec(i) {
         get puedeCrearDomicilio() {
             const tieneCliente = this.deliv.modo_cliente === 'mostrador'
                 || this.deliv.clienteSeleccionado !== null;
+            // Si es fiado, DEBE tener cliente registrado
+            if (this.deliv.payment_method === 'debt' && !this.deliv.clienteSeleccionado) return false;
             return this.carrito.length > 0
                 && this.deliv.delivery_address.trim() !== ''
                 && this.deliv.payment_method !== ''
                 && tieneCliente;
         },
 
-        // ── Helpers ────────────────────────────────────────────
         fmt(v) { return '$' + Math.round(v).toLocaleString('es-CO'); },
 
-        // ── Clientes ───────────────────────────────────────────
         async buscarClientes() {
             if (!this.queryCliente) { this.resultadosClientes = []; return; }
             const r = await fetch(`/pos/buscar-clientes?q=${encodeURIComponent(this.queryCliente)}`);
             this.resultadosClientes = await r.json();
         },
         setCliente(c) {
-            this.cliente           = c;
-            this.showClientes      = false;
-            this.queryCliente      = '';
+            this.cliente            = c;
+            this.showClientes       = false;
+            this.queryCliente       = '';
             this.resultadosClientes = [];
             if (c.id === 1) this.tieneDeuda = false;
         },
 
-        // ── Código promo (venta normal) ────────────────────────
         async validarCodigo() {
             if (!this.codigoPromo) return;
             const cookieIds = this.carrito.map(i => i.id);
-            const params    = new URLSearchParams({
-                code:     this.codigoPromo,
-                subtotal: this.subtotal,
-                delivery: 0,
-            });
+            const params    = new URLSearchParams({ code: this.codigoPromo, subtotal: this.subtotal, delivery: 0 });
             cookieIds.forEach(id => params.append('cookie_ids[]', id));
-            const r         = await fetch(`/admin/api/promo-codes/validate?${params}`);
+            const r          = await fetch(`/admin/api/promo-codes/validate?${params}`);
             this.promoResult = await r.json();
-            this.promoDescuento = this.promoResult.valid
-                ? (this.promoResult.discount_amount ?? 0)
-                : 0;
+            this.promoDescuento = this.promoResult.valid ? (this.promoResult.discount_amount ?? 0) : 0;
         },
         limpiarPromo() {
-            this.codigoPromo  = '';
-            this.promoResult  = null;
+            this.codigoPromo    = '';
+            this.promoResult    = null;
             this.promoDescuento = 0;
         },
 
-        // ── Búsqueda de clientes para domicilio ───────────────
         async buscarClientesDomicilio() {
             if (!this.deliv.queryCliente || this.deliv.queryCliente.length < 2) {
                 this.deliv.resultadosCliente = [];
@@ -910,7 +874,6 @@ dec(i) {
             this.deliv.clienteSeleccionado = c;
             this.deliv.queryCliente        = c.nombre;
             this.deliv.showDropdown        = false;
-            // Si tiene solo una dirección, preseleccionarla
             if (c.direcciones && c.direcciones.length === 1) {
                 this.seleccionarDireccion(c.direcciones[0]);
             } else {
@@ -934,28 +897,24 @@ dec(i) {
             this.deliv.guardar_direccion     = false;
             this.deliv.customer_name         = '';
             this.deliv.customer_phone        = '';
+            // Resetear fiado si se quita el cliente
+            if (this.deliv.payment_method === 'debt') {
+                this.deliv.payment_method = 'cash_on_delivery';
+            }
         },
 
-        // ── Código promo (domicilio) ───────────────────────────
         async validatePromoForDelivery() {
             if (!this.deliv.promo_code) return;
             const cookieIds = this.carrito.map(i => i.id);
-            const params    = new URLSearchParams({
-                code:     this.deliv.promo_code,
-                subtotal: this.subtotal,
-                delivery: 1,
-            });
+            const params    = new URLSearchParams({ code: this.deliv.promo_code, subtotal: this.subtotal, delivery: 1 });
             cookieIds.forEach(id => params.append('cookie_ids[]', id));
-            const r             = await fetch(`/admin/api/promo-codes/validate?${params}`);
+            const r               = await fetch(`/admin/api/promo-codes/validate?${params}`);
             this.promoResultDeliv = await r.json();
-
-            // Si el código da domicilio gratis, poner costo en 0
             if (this.promoResultDeliv.valid && this.promoResultDeliv.type === 'free_delivery') {
                 this.deliv.delivery_cost_type = 'free';
             }
         },
 
-        // ── Cobrar (venta normal) ──────────────────────────────
         async cobrar() {
             if (this.procesando) return;
             this.procesando = true;
@@ -963,16 +922,12 @@ dec(i) {
                 const res = await fetch('/pos/venta', {
                     method:  'POST',
                     headers: {
-                        'Content-Type':  'application/json',
-                        'X-CSRF-TOKEN':  document.querySelector('meta[name=csrf-token]').content,
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
                     },
                     body: JSON.stringify({
                         customer_id:          this.cliente.id,
-                        items:                this.carrito.map(i => ({
-                                                  cookie_id:        i.id,
-                                                  cantidad:         i.cantidad,
-                                                  precio_unitario:  i.precio,
-                                              })),
+                        items:                this.carrito.map(i => ({ cookie_id: i.id, cantidad: i.cantidad, precio_unitario: i.precio })),
                         descuento_porcentaje: this.descuento,
                         descuento_promo:      this.promoDescuento,
                         promo_code:           this.promoResult?.valid ? this.codigoPromo : null,
@@ -996,51 +951,44 @@ dec(i) {
             }
         },
 
-        // ── Crear domicilio ────────────────────────────────────
         async crearDomicilio() {
             if (!this.puedeCrearDomicilio || this.procesandoDomicilio) return;
             this.procesandoDomicilio = true;
 
-            // Construir payload según modo
             const esRegistrado = this.deliv.modo_cliente === 'registrado' && this.deliv.clienteSeleccionado;
             const payload = {
-                customer_id:            esRegistrado ? this.deliv.clienteSeleccionado.id : null,
-                customer_name:          esRegistrado ? null : (this.deliv.customer_name || null),
-                customer_phone:         esRegistrado ? null : (this.deliv.customer_phone || null),
-                delivery_address:       this.deliv.delivery_address,
-                delivery_neighborhood:  this.deliv.delivery_neighborhood || null,
-                delivery_cost_type:     this.deliv.delivery_cost_type,
-                delivery_cost:          this.deliveryCostCalc,
-                payment_method:         this.deliv.payment_method,
-                promo_code:             this.promoResultDeliv?.valid ? this.deliv.promo_code : null,
-                notes:                  this.deliv.notes || null,
-                guardar_direccion:      esRegistrado && this.deliv.guardar_direccion,
-                items:                  this.carrito.map(i => ({
-                                            cookie_id: i.id,
-                                            cantidad:  i.cantidad,
-                                        })),
+                customer_id:           esRegistrado ? this.deliv.clienteSeleccionado.id : null,
+                customer_name:         esRegistrado ? null : (this.deliv.customer_name || null),
+                customer_phone:        esRegistrado ? null : (this.deliv.customer_phone || null),
+                delivery_address:      this.deliv.delivery_address,
+                delivery_neighborhood: this.deliv.delivery_neighborhood || null,
+                delivery_cost_type:    this.deliv.delivery_cost_type,
+                delivery_cost:         this.deliveryCostCalc,
+                payment_method:        this.deliv.payment_method,
+                promo_code:            this.promoResultDeliv?.valid ? this.deliv.promo_code : null,
+                notes:                 this.deliv.notes || null,
+                guardar_direccion:     esRegistrado && this.deliv.guardar_direccion,
+                items:                 this.carrito.map(i => ({ cookie_id: i.id, cantidad: i.cantidad })),
             };
 
             try {
-                const r = await fetch('/admin/deliveries', {
+                const r    = await fetch('/admin/deliveries', {
                     method:  'POST',
                     headers: {
-                        'Content-Type':  'application/json',
-                        'Accept':        'application/json',          // ← clave: fuerza JSON en errores Laravel
-                        'X-CSRF-TOKEN':  document.querySelector('meta[name=csrf-token]').content,
+                        'Content-Type': 'application/json',
+                        'Accept':       'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
                     },
                     body: JSON.stringify(payload),
                 });
 
-                // Leer el texto crudo primero para no perder el cuerpo si no es JSON
-                const raw  = await r.text();
+                const raw = await r.text();
                 let data;
                 try {
                     data = JSON.parse(raw);
                 } catch (_) {
-                    // Laravel devolvió HTML (ej. error 500 o página de login)
-                    console.error('Respuesta no-JSON del servidor:', raw.substring(0, 500));
-                    alert('❌ Error del servidor (código ' + r.status + '). Revisa la consola para detalles.');
+                    console.error('Respuesta no-JSON:', raw.substring(0, 500));
+                    alert('❌ Error del servidor (código ' + r.status + '). Revisa la consola.');
                     return;
                 }
 
@@ -1058,7 +1006,6 @@ dec(i) {
                     this.limpiar();
                     alert('🛵 ' + data.message);
                 } else if (r.status === 422 && data.errors) {
-                    // Errores de validación de Laravel — mostrar el primero
                     const primerError = Object.values(data.errors).flat()[0];
                     alert('⚠️ ' + primerError);
                 } else {

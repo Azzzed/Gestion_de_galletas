@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Builder;
+use App\Models\Debt;
 
 class Debt extends Model
 {
@@ -52,15 +53,39 @@ class Debt extends Model
 
     // ── Helpers ──────────────────────────────────────────────────
 
-    public function registrarPago(float $monto): void
+      public function registerPayment(Request $request, DeliveryOrder $delivery): JsonResponse
     {
-        $nuevoPagado   = $this->monto_pagado + $monto;
-        $nuevoPendiente = max(0, $this->monto_original - $nuevoPagado);
-
-        $this->update([
-            'monto_pagado'    => $nuevoPagado,
-            'monto_pendiente' => $nuevoPendiente,
-            'estado'          => $nuevoPendiente <= 0 ? 'pagada' : 'pagada_parcial',
+        $request->validate(['amount' => 'required|numeric|min:1']);
+ 
+        $newPaid = $delivery->paid_amount + min((float) $request->amount, $delivery->remaining);
+        $status  = $newPaid >= $delivery->total ? 'paid' : 'partial';
+ 
+        $delivery->update([
+            'paid_amount'    => min($newPaid, $delivery->total),
+            'payment_status' => $status,
+        ]);
+ 
+        // ✅ FIX: Si quedó completamente pagado, marcar el Debt asociado como pagado
+        // (aplica cuando el domicilio fue registrado como "fiado/debt")
+        if ($status === 'paid' && $delivery->customer_id) {
+            \App\Models\Debt::withoutGlobalScopes()
+                ->where('customer_id', $delivery->customer_id)
+                ->where('estado', '!=', 'pagada')
+                ->whereRaw("notas LIKE ?", ['%DOM-' . str_pad($delivery->id, 4, '0', STR_PAD_LEFT) . '%'])
+                ->each(function ($debt) use ($delivery) {
+                    $debt->update([
+                        'monto_pagado'    => $debt->monto_original,
+                        'monto_pendiente' => 0,
+                        'estado'          => 'pagada',
+                    ]);
+                });
+        }
+ 
+        return response()->json([
+            'success'          => true,
+            'message'          => $status === 'paid' ? '🎉 ¡Pago completo! Deuda saldada.' : 'Abono registrado.',
+            'payment_status'   => $status,
+            'paid_amount'      => $delivery->fresh()->paid_amount,
         ]);
     }
 }
