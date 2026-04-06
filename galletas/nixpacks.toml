@@ -3,11 +3,8 @@ nixPkgs = ["php83", "php83Extensions.pgsql", "php83Extensions.mbstring", "php83E
 
 [phases.build]
 cmds = [
-  "composer install --no-dev --optimize-autoloader",
-  "php artisan config:cache",
-  "php artisan route:cache",
-  "php artisan view:cache"
+  "composer install --no-dev --optimize-autoloader"
 ]
 
 [start]
-cmd = "php artisan migrate --force && php artisan storage:link && php -S 0.0.0.0:$PORT -t public"
+cmd = "php artisan config:clear && php artisan config:cache && php artisan route:cache && php artisan view:cache && php artisan migrate --force && php artisan storage:link && php -S 0.0.0.0:$PORT -t public"
