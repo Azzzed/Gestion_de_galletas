@@ -12,6 +12,10 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
+        // ✅ Deshabilitar CSRF globalmente
+    $middleware->validateCsrfTokens(except: [
+        '*'
+    ]);
 
         // ── Alias de middlewares personalizados ──
         $middleware->alias([
